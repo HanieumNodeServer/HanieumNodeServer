@@ -1,0 +1,6 @@
+## database 정보 및 secretKey 정보 등 유출되면 안되는 정보는 git ignore에 명시할 것
+
+
+config/database.js
+
+database.js
