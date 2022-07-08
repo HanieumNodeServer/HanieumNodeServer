@@ -10,4 +10,6 @@ router.get("/test/jk", index.test)
 
 router.get("/test/cd", index.test2)
 
+router.get("/test/test3", index.test2)
+
 module.exports = router
