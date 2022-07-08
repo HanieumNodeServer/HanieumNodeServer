@@ -28,7 +28,9 @@ exports.indexTest = async function (req, res, next) {
 
 exports.test = async function (req, res) {
   try {
-    return res.send(response(baseResponse.SUCCESS("안녕하세요")))
+    const a = 1;
+    const b = 2;
+    return res.send(response(baseResponse.SUCCESS("안녕하세요")),a+b);
   } catch (err) {
     logger.error(err)
     return res.send(errResponse(baseResponse.FAIL))
