@@ -4,4 +4,7 @@
 config/database.js
 database.js
 
+
 # 기타 secret 정보
+config/secret.js
+secret.js
