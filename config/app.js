@@ -23,9 +23,11 @@ app.use(cors());
 
 const indexRouter = require('../src/routes');
 const usersRouter = require('../src/routes/users');
+const busRouter = require('../src/routes/bus');
 
 app.use('/', indexRouter);
 app.use('/', usersRouter);
+app.use('/',busRouter);
 
 let debug = require('debug')('nodetemplate:server');
 

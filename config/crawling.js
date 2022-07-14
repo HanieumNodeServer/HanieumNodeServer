@@ -31,9 +31,9 @@ function getCityCode(){
         // Odsay에서 받아온 지역 코드
         const regionData = result.data.result.CID;
         // DB에 입력할 sql query 작성
-        const sql = `insert into region(cityRegion,cityName,cityCode) values (?,?,?);`
+        const sql = `insert into REGION(cityRegion,cityName,cityCode) values (?,?,?);`
         // 지역 코드 region 테이블에 입력
-        insertDb(sql,regionData);
+        //insertDb(sql,regionData);
 
         // 터미널 ID 입력을 위해 지역 코드 다음 함수로 전달
         getTerminalName(regionData);
@@ -70,14 +70,26 @@ async function getOpenApi(cityCode,url){
     await axios.get(url).then((result)=>{
         // 넘겨 받은 API 결과 DB에 입력
         const resultData = result.data.result;
-        let sql = `insert into terminal(cityCode,odseyTerId,terminalName,terminalX,terminalY) values (?,?,?,?,?);`;
-        insertDb(sql,resultData,cityCode);
+        let sql = `insert into TERMINAL(cityCode,odseyTerId,terminalName,terminalX,terminalY) values (?,?,?,?,?);`;
+        insertDb2(sql,resultData,cityCode);
     })
 }
 
+// 마지막으로 진행한 함수 = 지역코드에 해당하는 터미널 정보 입력 기능
+async function insertDb(sql,data){
+    const connection = await pool.getConnection((conn)=>conn);
+    console.log(data);
+    for(let i in data){
+        await connection.query(sql,[data[i].cityRegion, data[i].cityName, data[i].cityCode]);
+    }
+
+    connection.release();
+    console.log("입력 완료");
+
+}
 
 // 마지막으로 진행한 함수 = 지역코드에 해당하는 터미널 정보 입력 기능
-async function insertDb(sql,data,cityCode){
+async function insertDb2(sql,data,cityCode){
     const connection = await pool.getConnection((conn)=>conn);
     console.log(data);
     for(let i in data){
