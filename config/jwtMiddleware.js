@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const {response,errResponse} = require("./response");
-const baseResponse = require("/config/baseResponseDict");
-const secret = require('/config/secret');
+const baseResponse = require("./baseResponseDict");
+const secret = require('./secret');
 const logger = require('loglevel');
 
 const jwtMiddleware = (req,res,next) => {
