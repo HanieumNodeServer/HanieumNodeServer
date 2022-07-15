@@ -5,5 +5,6 @@ const jwtMiddleware = require("../../config/jwtMiddleware");
 
 router.get('/bus/list',bus.getBusList);
 
+router.get('/bus/list/selected',bus.selectMyBus);
 
 module.exports = router;
