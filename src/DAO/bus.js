@@ -33,3 +33,15 @@ exports.getCityName = async function(connection,id){
     return resultRow;
 
 }
+
+exports.getTerminalID = async function(connection,name){
+    const sql = `
+    select odseyTerId,terminalName 
+        from TERMINAL
+    where terminalName = ?;
+    `;
+
+    const [resultRow] = await connection.query(sql,name);
+    return resultRow;
+
+}
