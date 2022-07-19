@@ -104,3 +104,80 @@ exports.selectMyBus = async function(req,res){
     return res.send(errResponse(baseResponse.FAIL));
     }
 }
+
+exports.getDepartArriv = async function(req,res){
+
+    const departure = req.params.departure;
+    const arrival = req.params.arrival;
+
+    // TODO : Path variable 값이 없을 경우 Validation 처리
+
+    if(!departure || !arrival){
+        return res.send(errResponse(baseResponse.PARAM_EMPTY));
+    }
+
+    try{
+
+        const connection = await pool.getConnection((conn)=>conn);
+
+        const departureID = await busDao.getTerminalID(connection,departure);
+
+        const arrivalID = await busDao.getTerminalID(connection,arrival);
+
+
+        if(departureID[0] === undefined || arrivalID[0] === undefined){
+            return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+        }
+
+
+        let url = 'https://api.odsay.com/v1/api/intercityServiceTime?lang=0' +
+            '&apiKey=' +
+            serviceKey +
+            '&startStationID='+
+            departureID[0].odseyTerId+
+            '&endStationID='+
+            arrivalID[0].odseyTerId+
+            '&output=json';
+
+        await axios.get(url).then((result)=>{
+
+            if(result.data.result === undefined){
+                console.log(result.data.result);
+                return res.send(errResponse(baseResponse.ROUTE_NOT_FOUND));
+            }
+
+            let temp=[];
+            for(let i in result.data.result.station){
+                 temp[i] = {
+                     "fare" : result.data.result.station[i].normalFare,
+                     "firstTime": result.data.result.station[i].firstTime,
+                     "lastTime": result.data.result.station[i].lastTime,
+                     "schedule": result.data.result.station[i].schedule.split('/').join(',').split('\n').join(',').split(',')
+                }
+
+                if(result.data.result.station[i].nightSchedule !== ""){
+                    let night = {
+                        "nightSchedule" : result.data.result.station[i].nightSchedule,
+                        "nightFare" : result.data.result.station[i].nightFare
+                    }
+                    temp[i] = Object.assign(temp[i],night);
+                }
+            }
+
+            let resultRow = {
+                "count" : result.data.result.count,
+                "list" : temp
+            }
+
+
+            return res.send(response(baseResponse.SUCCESS("성공입니다"),resultRow));
+        })
+
+
+    }catch (err) {
+        logger.warn("[에러발생]" + err );
+        return res.send(errResponse(baseResponse.FAIL));
+    }
+
+
+}
