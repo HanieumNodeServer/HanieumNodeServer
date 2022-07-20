@@ -40,11 +40,11 @@ exports.getBusList = async function(req,res){
 
         const resultRow = await busDao.getBusList(connection,busInfoParams,sql);
 
-        res.send(response(baseResponse.SUCCESS("성공하였습니다."),resultRow));
+        return res.send(response(baseResponse.SUCCESS("성공하였습니다."),resultRow));
 
     }catch (err){
         logger.warn(err + "에러 발생");
-        res.send(errResponse(baseResponse.FAIL));
+        return res.send(errResponse(baseResponse.FAIL));
     }
 
 }
