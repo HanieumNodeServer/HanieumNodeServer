@@ -11,6 +11,8 @@ module.exports = {
     ROUTE_NOT_FOUND : {"isSuccess" : false, "code" : -1 , "message" : "조회 가능한 버스가 없습니다."},
     TERMINAL_NOT_FOUND : {"isSuccess" : false, "code" : -1 , "message" : "조회 가능한 터미널 정보가 없습니다."},
     PARAM_EMPTY : {"isSuccess" : false, "code" : -1 , "message" : "입력 칸에 정보를 입력해주세요"},
+    USER_RESERVATION_EMPTY : {"isSuccess" : false, "code" : -1 , "message" : "예약하신 정보가 없습니다"},
+    USER_STATUS_FAIL : {"isSuccess" : false, "code" : -1 , "message" : "존재하지 않거나 탈퇴한 회원입니다."},
 
 
 
