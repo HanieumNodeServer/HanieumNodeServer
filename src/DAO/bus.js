@@ -42,3 +42,15 @@ exports.getTerminalID = async function(connection,name){
     return resultRow;
 
 }
+
+exports.getCoordinate = async function(connection,terminalName){
+    const sql = `
+        select terminalName,latitude as lat,longitude as lon 
+            from TERMINAL
+        where terminalName = ?;
+    `;
+
+    const [resultRow] = await connection.query(sql,terminalName);
+    return resultRow;
+
+}
