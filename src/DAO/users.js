@@ -1,18 +1,16 @@
-exports.checkUserStatus = async function(connection,userId){
-
-    const sql = `
+exports.checkUserStatus = async function (connection, userId) {
+  const sql = `
     select userId,name,status 
     from USER
     where userId = ? and status = 'Y';
     `;
 
-    const [resultRow] = await connection.query(sql,userId)
-    return resultRow;
+  const [resultRow] = await connection.query(sql, userId);
+  return resultRow;
+};
 
-}
-
-exports.getUserReservation = async function(connection,userId){
-    const sql = `
+exports.getUserReservation = async function (connection, userId) {
+  const sql = `
 select D.terminalName as '출발지' ,A.terminalName as '도착지',charge as '요금', corName as '운행회사',concat(seat,'번') as '좌석번호',
        time_format(startTime,'%h시%m분 %p') as '출발시간', time_format(arrivalTime,'%h시%m분 %p') as '도착시간',
 
@@ -30,6 +28,30 @@ inner join TERMINAL D on TICKETING.departTerId = D.tmoneyTerId
 where userId = '2';
     `;
 
-    const [resultRow] = await connection.query(sql,userId);
-    return resultRow;
-}
+  const [resultRow] = await connection.query(sql, userId);
+  return resultRow;
+};
+
+exports.getUserId = async function (connection, idNumber) {
+  const sql = `
+    select userId
+    from USER
+    where identificationId = ?;`;
+
+  const userId = await connection.query(sql, idNumber);
+  return userId;
+};
+
+exports.insertUserInfo = async function (connection, insertUserInfoParams) {
+  await connection.beginTransaction();
+  const sql = `
+    insert into USER(name, identificationId, refreshToken)
+    values (?, ?, ?);
+    `;
+
+  const inserUserInfoRow = await connection.query(sql, insertUserInfoParams);
+  console.log("sdf");
+  await connection.commit();
+
+  return inserUserInfoRow;
+};
