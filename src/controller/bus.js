@@ -14,7 +14,6 @@ exports.getBusList = async function(req,res){
 
     const temp = [regionNm, terminalNm];
     const busInfoParams = temp.filter((element)=> element !== undefined && element !== '');
-    console.log(busInfoParams);
 
     if(regionNm === ''){
         regionNm = undefined;
@@ -51,6 +50,7 @@ exports.getBusList = async function(req,res){
 
 exports.selectMyBus = async function(req,res){
 
+    let type = req.query.type;
     let departure = req.query.departure;
     let region = req.query.region;
 
@@ -63,22 +63,24 @@ exports.selectMyBus = async function(req,res){
 
         const deptBusInfo = await busDao.getBusId(connection,departure);
 
-        let url = 'https://api.odsay.com/v1/api/intercityBusTerminals?lang=0&' +
-            '&terminalName='+
-            encodeURI(deptBusInfo[0].terminalName) +
-            '&apiKey=' +
-            serviceKey +
-            '&output=json';
+        let url = 'https://apigw.tmoney.co.kr:5556/gateway/xzzLinListGet/v1/lin_list/' +
+             type + '/' +
+            deptBusInfo[0].tmoneyTerId;
 
-        const result = await axios.get(url).then((result)=>{
 
-            const resultRow = result.data.result[0].destinationTerminals;
+        const result = await axios.get(url,{
+            headers : {"x-Gateway-APIKey" : "0ed92177-200d-4143-9d14-acd661a85535"}
+        }).then((result)=>{
+
+            const resultRow = result.data.response.TER_LIST;
+
             return resultRow;
         });
 
         let temp =[];
         for(let i in result){
-           temp[i] = await busDao.getCityName(connection,result[i].stationID);
+           temp[i] = await busDao.getCityName(connection,result[i].TER_COD);
+
         }
 
         if(region !== undefined){
@@ -95,7 +97,6 @@ exports.selectMyBus = async function(req,res){
         }
         */
 
-
     return res.send(response(baseResponse.SUCCESS("성공하였습니다"),deptBusInfo));
 
 
@@ -105,12 +106,11 @@ exports.selectMyBus = async function(req,res){
     }
 }
 
+// TODO : 배차리스트 조회 API 사용 승인 후 API key 및 내부 코드 수정
 exports.getDepartArriv = async function(req,res){
 
     const departure = req.params.departure;
     const arrival = req.params.arrival;
-
-    // TODO : Path variable 값이 없을 경우 Validation 처리
 
     if(!departure || !arrival){
         return res.send(errResponse(baseResponse.PARAM_EMPTY));

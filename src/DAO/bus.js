@@ -1,10 +1,8 @@
 exports.getBusList = async function(connection,busInfoParams,where) {
     const sql = `
-    select r.cityRegion,r.cityName,terminalName 
-      from TERMINAL
-        inner join REGION r on TERMINAL.cityCode = r.cityCode` +
+select cityRegion,cityName,terminalName from TERMINAL` +
         where +
-        `order by r.cityCode;`;
+        `order by tmoneyTerId;`;
 
     const [resultRow] = await connection.query(sql);
 
@@ -14,7 +12,7 @@ exports.getBusList = async function(connection,busInfoParams,where) {
 
 exports.getBusId = async function(connection,deptBus){
 
-    const sql = `select odseyTerId,terminalName from TERMINAL where terminalName like` + ' \'%' + deptBus + '%\';';
+    const sql = `select tmoneyTerId,terminalName from TERMINAL where terminalName like` + ' \'%' + deptBus + '%\';';
 
     const [resultRow] = await connection.query(sql,deptBus);
     return resultRow;
@@ -24,9 +22,8 @@ exports.getBusId = async function(connection,deptBus){
 exports.getCityName = async function(connection,id){
 
     const sql = `
-    select R.cityRegion, R.cityName, terminalName from TERMINAL
-    inner join REGION R on TERMINAL.cityCode = R.cityCode
-    where odseyTerId = ?;
+    select cityRegion, cityName, terminalName from TERMINAL
+    where tmoneyTerId = ?;
     `;
 
     const [resultRow] = await connection.query(sql,id);
