@@ -12,4 +12,7 @@ router.get('/bus/list/selected',bus.selectMyBus);
 // 출발지 도착지 설정에 따른 시간 및 요금 정보 검색 (departure = 출발 터미널 , arrival = 도착 터미널)
 router.get('/bus/list/:departure/:arrival', bus.getDepartArriv);
 
+
+router.get('/terminal/list/nearest',bus.getNearestTer);
+
 module.exports = router;

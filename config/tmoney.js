@@ -43,7 +43,7 @@ async function insertDb(apiInfo) {
     let totalAdr = i.TER_ADR;
     adrArr = totalAdr.split(" ");
     let city = adrArr[0];
-    let region = adrArr[2];
+    let region = adrArr[1];
 
     let address = adrArr.slice(2).join(" ");
 

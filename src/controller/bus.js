@@ -4,8 +4,10 @@ const baseResponse = require("../../config/baseResponseDict")
 const logger = require("loglevel")
 const busDao = require("../DAO/bus")
 const axios = require('axios')
+const haversine = require('haversine')
+// const qs = require('qs')
 
-const serviceKey = encodeURIComponent('HdCqR2fdx9sP+ae1CKFoosB6FRTKbZEluSjHXTbKcyY');
+const serviceKey = "0ed92177-200d-4143-9d14-acd661a85535";
 
 exports.getBusList = async function(req,res){
 
@@ -33,16 +35,18 @@ exports.getBusList = async function(req,res){
         sql = ` `;
     }
 
+    const connection = await pool.getConnection((conn)=>conn);
 
     try{
-        const connection = await pool.getConnection((conn)=>conn);
-
         const resultRow = await busDao.getBusList(connection,busInfoParams,sql);
+
+        connection.release();
 
         return res.send(response(baseResponse.SUCCESS("성공하였습니다."),resultRow));
 
     }catch (err){
         logger.warn(err + "에러 발생");
+        connection.release();
         return res.send(errResponse(baseResponse.FAIL));
     }
 
@@ -51,17 +55,16 @@ exports.getBusList = async function(req,res){
 exports.selectMyBus = async function(req,res){
 
     let type = req.query.type;
-    let departure = req.query.departure;
+    let terminalNm = req.query.terminalNm;
     let region = req.query.region;
 
-    if(departure === undefined){
-        departure = '';
+    if(terminalNm === undefined){
+        terminalNm = '';
     }
-
+    const connection = await pool.getConnection((conn)=>conn);
     try{
-        const connection = await pool.getConnection((conn)=>conn);
 
-        const deptBusInfo = await busDao.getBusId(connection,departure);
+        const deptBusInfo = await busDao.getBusId(connection,terminalNm);
 
         let url = 'https://apigw.tmoney.co.kr:5556/gateway/xzzLinListGet/v1/lin_list/' +
              type + '/' +
@@ -69,7 +72,7 @@ exports.selectMyBus = async function(req,res){
 
 
         const result = await axios.get(url,{
-            headers : {"x-Gateway-APIKey" : "0ed92177-200d-4143-9d14-acd661a85535"}
+            headers : {"x-Gateway-APIKey" : serviceKey}
         }).then((result)=>{
 
             const resultRow = result.data.response.TER_LIST;
@@ -82,7 +85,7 @@ exports.selectMyBus = async function(req,res){
            temp[i] = await busDao.getCityName(connection,result[i].TER_COD);
 
         }
-
+        console.log(temp[0][0].terminalName);
         if(region !== undefined){
             deptBusInfo[0]["arrival"] = temp.filter((element) => element[0].cityRegion === region);
 
@@ -96,12 +99,13 @@ exports.selectMyBus = async function(req,res){
             result[i] = result[i].stationName;
         }
         */
-
+        connection.release();
     return res.send(response(baseResponse.SUCCESS("성공하였습니다"),deptBusInfo));
 
 
     }catch (err){
         logger.warn("[에러발생]" + err );
+        connection.release();
     return res.send(errResponse(baseResponse.FAIL));
     }
 }
@@ -115,10 +119,9 @@ exports.getDepartArriv = async function(req,res){
     if(!departure || !arrival){
         return res.send(errResponse(baseResponse.PARAM_EMPTY));
     }
+    const connection = await pool.getConnection((conn)=>conn);
 
     try{
-
-        const connection = await pool.getConnection((conn)=>conn);
 
         const departureID = await busDao.getTerminalID(connection,departure);
 
@@ -169,15 +172,84 @@ exports.getDepartArriv = async function(req,res){
                 "list" : temp
             }
 
-
+            connection.release();
             return res.send(response(baseResponse.SUCCESS("성공입니다"),resultRow));
         })
 
 
     }catch (err) {
         logger.warn("[에러발생]" + err );
+        connection.release();
         return res.send(errResponse(baseResponse.FAIL));
     }
 
+
+}
+
+exports.getNearestTer = async function (req,res){
+
+    const terminalNm = req.query.terminalNm;
+
+    const user = {
+        latitude : Number(req.query.latitude),
+        longitude : Number(req.query.longitude)
+    };
+
+    if(user.latitude > 90 || user.latitude < -90 || user.longitude > 180 || user.longitude < -180){
+        return res.send(errResponse(baseResponse.LAT_LONG_WRONG));
+    }
+
+    const connection = await pool.getConnection((conn)=>conn);
+
+    try{
+
+        const terList = await axios.get('http://localhost:3000/bus/list/selected',{params :{
+            terminalNm : terminalNm,
+            type : 'a'
+        }}).then((result)=>{
+            return result.data.result;
+        })
+
+        if(terList === undefined){
+            return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+        }
+
+        let terminalInfo = [];
+        for(let i in terList[0].arrival){
+             let terminalName = terList[0].arrival[i][0].terminalName;
+                 terminalInfo[i] = await busDao.getCoordinate(connection,terminalName);
+        }
+
+        let distance,resultRow;
+
+        for(let i in terminalInfo){
+            const end = {
+                latitude : Number(terminalInfo[i][0].lat),
+                longitude : Number(terminalInfo[i][0].lon)
+            }
+
+            if(i === '0'){
+                distance = haversine(user,end,{unit:'mile'});
+                resultRow = {
+                    "terminalName" : terminalInfo[i][0].terminalName
+                }
+            }else if(distance >= haversine(user,end,{unit:'mile'})){
+                distance = haversine(user,end,{unit:'mile'});
+                resultRow = {
+                 "terminalName" : terminalInfo[i][0].terminalName
+                }
+            }
+
+        }
+
+        connection.release();
+
+        return res.send(response(baseResponse.SUCCESS("성공입니다."),resultRow));
+
+    }catch (err) {
+        logger.warn("[에러발생]" + err );
+        connection.release();
+        return res.send(errResponse(baseResponse.FAIL));
+    }
 
 }

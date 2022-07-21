@@ -13,6 +13,7 @@ module.exports = {
     PARAM_EMPTY : {"isSuccess" : false, "code" : -1 , "message" : "입력 칸에 정보를 입력해주세요"},
     USER_RESERVATION_EMPTY : {"isSuccess" : false, "code" : -1 , "message" : "예약하신 정보가 없습니다"},
     USER_STATUS_FAIL : {"isSuccess" : false, "code" : -1 , "message" : "존재하지 않거나 탈퇴한 회원입니다."},
+    LAT_LONG_WRONG : {"isSuccess" : false, "code" : -1 , "message" : "올바르지 못한 위도 경도 값입니다."},
 
 
 
