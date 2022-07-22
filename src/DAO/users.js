@@ -39,19 +39,46 @@ exports.getUserId = async function (connection, idNumber) {
     where identificationId = ?;`;
 
   const userId = await connection.query(sql, idNumber);
+
   return userId;
 };
 
 exports.insertUserInfo = async function (connection, insertUserInfoParams) {
   await connection.beginTransaction();
   const sql = `
-    insert into USER(name, identificationId, refreshToken)
-    values (?, ?, ?);
+    insert into USER(name, identificationId, refreshToken, issuedYear)
+    values (?, ?, ?, ?);
     `;
 
   const inserUserInfoRow = await connection.query(sql, insertUserInfoParams);
-  console.log("sdf");
+
   await connection.commit();
 
   return inserUserInfoRow;
+};
+
+exports.updateRefreshToken = async function (
+  connection,
+  refreshToken,
+  idNumber
+) {
+  const sql = `
+  update USER set refreshToken = ?
+  where identificationId = ?; 
+  `;
+
+  const resultRow = await connection.query(sql, [refreshToken, idNumber]);
+  return resultRow;
+};
+
+exports.getRefreshToken = async function (connection, userRefreshToken) {
+  const sql = `
+  select userId 
+  from USER
+  where refreshToken = ?; 
+  `;
+
+  const resultRow = await connection.query(sql, userRefreshToken);
+
+  return resultRow;
 };
