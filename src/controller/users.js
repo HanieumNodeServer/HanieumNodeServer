@@ -10,8 +10,6 @@ const userDao = require("../DAO/users");
 // TODO : userDAO 추가
 
 exports.signup = async function (req, res, next) {
-  // TODO: req.body 받는 로직 구현
-
   const { name, idNumber, year } = req.body;
 
   //   const hashedIdNumber = await crypto
@@ -23,45 +21,41 @@ exports.signup = async function (req, res, next) {
 
   const userId = await userDao.getUserId(connection, idNumber);
 
-  // let resultUserId = undefined;
-
-  // TODO: response 만들기(이미 있는 계정 처리)
-  if (userId[0][0] !== undefined) {
-    resultUserId = userId[0][0].userId;
-    return errResponse(baseResponse);
-  }
-
   // refresh token 발급
-
   const refreshToken = jwt.sign({}, secretConfig.key, {
     expiresIn: "60d",
     issuer: "cdragon",
   });
 
-  const insertUserInfoParams = [name, idNumber, year, refreshToken];
+  const insertUserInfoParams = [name, idNumber, refreshToken, year];
 
   try {
-    // DB에 유저 정보 및 refresh Token 삽입
-    const signupResponse = await userDao.insertUserInfo(
-      connection,
-      insertUserInfoParams
-    );
-    console.log("회원 정보 삽입 성공");
+    // TODO: response 만들기(이미 있는 계정 처리)
+    if (userId[0][0] !== undefined) {
+      await userDao.updateRefreshToken(connection, refreshToken, idNumber);
+      console.log("이미 있는 계정 refresh token 재발급");
+    } else {
+      // DB에 유저 정보 및 refresh Token 삽입
+      const signupResponse = await userDao.insertUserInfo(
+        connection,
+        insertUserInfoParams
+      );
+      console.log("회원 정보 삽입 성공");
 
-    // TODO: 인증 확인 절차 로직 구현
-
-    console.log("인증 성공");
+      // TODO: 인증 확인 절차 로직 구현
+      console.log("인증 성공");
+    }
 
     const resultUserId = await userDao.getUserId(connection, idNumber);
 
-    // 토큰 세팅
+    // access 토큰 세팅
     const accessToken = jwt.sign({ resultUserId }, secretConfig.key, {
       expiresIn: "1h",
       issuer: "cdragon",
     });
 
-    res.cookie("accesToken", accessToken);
-    res.cookie("resfreshToken", refreshToken);
+    res.cookie("accessToken", accessToken);
+    res.cookie("refreshToken", refreshToken);
 
     res.send(response(baseResponse.SUCCESS("로그인 성공")));
   } catch (e) {
