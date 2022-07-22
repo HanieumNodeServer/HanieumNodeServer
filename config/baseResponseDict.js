@@ -5,6 +5,7 @@ module.exports = {
 
   FAIL: { isSuccess: false, code: -1, message: "실패입니다." },
   TOKEN_EMPTY: { isSuccess: false, code: -1, message: "토큰이 비어있습니다." },
+
   TOKEN_EXPIRED: {
     isSuccess: false,
     code: -1,
@@ -50,4 +51,9 @@ module.exports = {
     code: -1,
     message: "올바르지 못한 위도 경도 값입니다.",
   },
+  OUT_RANGE_DATE : {isSuccess : false,
+    code : -1 ,
+    message : "해당 날짜는 정보를 제공해드릴 수 없습니다."},
+
+
 };

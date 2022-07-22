@@ -5,6 +5,7 @@ const logger = require("loglevel")
 const busDao = require("../DAO/bus")
 const axios = require('axios')
 const haversine = require('haversine')
+const dateUtils = require('date-utils');
 // const qs = require('qs')
 
 const serviceKey = "0ed92177-200d-4143-9d14-acd661a85535";
@@ -72,7 +73,7 @@ exports.selectMyBus = async function(req,res){
 
 
         const result = await axios.get(url,{
-            headers : {"x-Gateway-APIKey" : serviceKey}
+            headers : {"x-Gateway-APIKey" : "0ed92177-200d-4143-9d14-acd661a85535"}
         }).then((result)=>{
 
             const resultRow = result.data.response.TER_LIST;
@@ -111,21 +112,37 @@ exports.selectMyBus = async function(req,res){
 }
 
 // TODO : 배차리스트 조회 API 사용 승인 후 API key 및 내부 코드 수정
-exports.getDepartArriv = async function(req,res){
+exports.getDepartArrival = async function(req,res){
 
     const departure = req.params.departure;
     const arrival = req.params.arrival;
 
+    let now = new Date();
+    let date = req.query.date;
+    let time = req.query.time;
+
+
+    if(!date){
+        date = now.toFormat('YYYYMMDD');
+    }else if(parseInt(date) >parseInt(now.toFormat('YYYYMMDD'))+3000){
+        return res.send(errResponse(baseResponse.OUT_RANGE_DATE))
+    }
+
+    if(!time){
+        time = now.toFormat('HH24MI');
+    }
+
     if(!departure || !arrival){
         return res.send(errResponse(baseResponse.PARAM_EMPTY));
     }
+
     const connection = await pool.getConnection((conn)=>conn);
 
     try{
 
-        const departureID = await busDao.getTerminalID(connection,departure);
+        const departureID = await busDao.checkTerminalID(connection,departure);
 
-        const arrivalID = await busDao.getTerminalID(connection,arrival);
+        const arrivalID = await busDao.checkTerminalID(connection,arrival);
 
 
         if(departureID[0] === undefined || arrivalID[0] === undefined){
@@ -133,42 +150,51 @@ exports.getDepartArriv = async function(req,res){
         }
 
 
-        let url = 'https://api.odsay.com/v1/api/intercityServiceTime?lang=0' +
-            '&apiKey=' +
-            serviceKey +
-            '&startStationID='+
-            departureID[0].odseyTerId+
-            '&endStationID='+
-            arrivalID[0].odseyTerId+
-            '&output=json';
+        let url = 'https://apigw.tmoney.co.kr:5556/gateway/xzzIbtListGet/v1/ibt_list/' +
+            date + '/' +
+            time + '/' +
+            departure + '/' +
+            arrival + '/' +
+            '9' + '/' +
+            '2'
 
-        await axios.get(url).then((result)=>{
+        await axios.get(url,{
+            headers : {"x-Gateway-APIKey" : "42e5892b-0e48-4b0b-8cdc-6b9bc8699bc1"}
+        }).then((result)=>{
 
-            if(result.data.result === undefined){
-                console.log(result.data.result);
+            if(result.data.response === undefined){
                 return res.send(errResponse(baseResponse.ROUTE_NOT_FOUND));
             }
 
+            let data = result.data.response.LINE_LIST
             let temp=[];
-            for(let i in result.data.result.station){
-                 temp[i] = {
-                     "fare" : result.data.result.station[i].normalFare,
-                     "firstTime": result.data.result.station[i].firstTime,
-                     "lastTime": result.data.result.station[i].lastTime,
-                     "schedule": result.data.result.station[i].schedule.split('/').join(',').split('\n').join(',').split(',')
+
+            for(let i in data){
+
+                if(data[i].BUS_GRA_O === 'IDG'){
+                    data[i].BUS_GRA_O = '일반'
+                }else if(data[i].BUS_GRA_O === 'IDP'){
+                    data[i].BUS_GRA_O = '우등'
+                }else if(data[i].BUS_GRA_O === 'ING'){
+                    data[i].BUS_GRA_O = '심야일반'
                 }
 
-                if(result.data.result.station[i].nightSchedule !== ""){
-                    let night = {
-                        "nightSchedule" : result.data.result.station[i].nightSchedule,
-                        "nightFare" : result.data.result.station[i].nightFare
-                    }
-                    temp[i] = Object.assign(temp[i],night);
-                }
+                 temp[i] = {
+                     "time" :[data[i].TIM_TIM_O.slice(0,2),':',data[i].TIM_TIM_O.slice(2,4)].join(''),
+                     "corName" : data[i].COR_NAM,
+                     "estimated" :(data[i].LIN_TIM/60 >> 0) + "시" + data[i].LIN_TIM % 60 + "분 예상" ,
+                     "reservableSeatCnt" : data[i].REM_CNT,
+                     "rotId" : data[i].ROT_ID,
+                     "rotSqno" : data[i].ROT_SQNO,
+                     "alcnDt" : data[i].ALCN_DT,
+                     "alcnSqno" : data[i].ALCN_SQNO,
+                     "BUS_GRA_O" : data[i].BUS_GRA_O
+                 }
+
             }
 
             let resultRow = {
-                "count" : result.data.result.count,
+                "count" : data.length,
                 "list" : temp
             }
 

@@ -22,7 +22,7 @@ exports.getBusId = async function(connection,deptBus){
 exports.getCityName = async function(connection,id){
 
     const sql = `
-    select cityRegion, cityName, terminalName from TERMINAL
+    select cityRegion, cityName, terminalName,tmoneyTerId from TERMINAL
     where tmoneyTerId = ?;
     `;
 
@@ -31,14 +31,14 @@ exports.getCityName = async function(connection,id){
 
 }
 
-exports.getTerminalID = async function(connection,name){
+exports.checkTerminalID = async function(connection,id){
     const sql = `
-    select odseyTerId,terminalName 
-        from TERMINAL
-    where terminalName = ?;
+    select tmoneyTerId,terminalName 
+    from TERMINAL 
+    where tmoneyTerId = ?;
     `;
 
-    const [resultRow] = await connection.query(sql,name);
+    const [resultRow] = await connection.query(sql,id);
     return resultRow;
 
 }
