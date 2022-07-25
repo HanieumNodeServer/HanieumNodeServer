@@ -11,6 +11,7 @@ const userDao = require("../src/DAO/users");
 const jwtMiddleware = async (req, res, next) => {
   const token = req.headers["x-access-token"];
   if (!req.cookies.accessToken) {
+    // res.redirect('/');
     return res.send(errResponse(baseResponse.ACCESS_TOKEN_EXPIRED));
     // 로그인으로 리다이렉트
   }
@@ -34,6 +35,8 @@ const jwtMiddleware = async (req, res, next) => {
 
     const isValid = await userDao.getRefreshToken(connection, userRefreshToken);
 
+    const userId = await userDao.getUserId(connection, userRefreshToken);
+
     if (isValid[0][0] !== undefined) {
       const newAccessToken = jwt.sign({ userId }, secret.key, {
         expiresIn: "1h",
@@ -45,13 +48,23 @@ const jwtMiddleware = async (req, res, next) => {
     } else {
       res.send(errResponse(baseResponse.TOKEN_EXPIRED));
     }
+    connection.release();
   } else {
     if (refreshToken === undefined) {
+      const connection = await pool.getConnection(async (conn) => conn);
+
       // case3: access token은 유효하지만, refresh token은 만료된 경우
-      const newRefreshToken = jwt.sign({ userId }, secret.key, {
+      const newRefreshToken = jwt.sign({}, secret.key, {
         expiresIn: "1h",
         issuer: "cdragon",
       });
+
+      await userDao.refreshRefreshToken(
+        connection,
+        req.cookies.refreshToken,
+        newRefreshToken
+      );
+
       res.cookie("refreshToken", newRefreshToken);
       req.cookies.refreshToken = newRefreshToken;
       next();

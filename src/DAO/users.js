@@ -71,6 +71,23 @@ exports.updateRefreshToken = async function (
   return resultRow;
 };
 
+exports.refreshRefreshToken = async function (
+  connection,
+  oldRefreshToken,
+  newRefreshToken
+) {
+  const sql = `
+  update USER set refreshToken = ?
+  where refreshToken = ?; 
+  `;
+
+  const resultRow = await connection.query(sql, [
+    newRefreshToken,
+    oldRefreshToken,
+  ]);
+  return resultRow;
+};
+
 exports.getRefreshToken = async function (connection, userRefreshToken) {
   const sql = `
   select userId 
@@ -81,4 +98,15 @@ exports.getRefreshToken = async function (connection, userRefreshToken) {
   const resultRow = await connection.query(sql, userRefreshToken);
 
   return resultRow;
+};
+
+exports.getUserIdByRefreshToken = async function (connection, refreshToken) {
+  const sql = `
+    select userId
+    from USER
+    where refreshToken = ?;`;
+
+  const userId = await connection.query(sql, refreshToken);
+
+  return userId;
 };
