@@ -65,41 +65,57 @@ exports.selectMyBus = async function (req, res) {
   let type = req.query.type;
   let terminalNm = req.query.terminalNm;
   let region = req.query.region;
+  let arrivalNm = req.query.arrivalNm;
+
+  let isStart;
+  if(type === 's') isStart = true;
+  else if(type === 'a') isStart = false;
+  else return res.send(errResponse(baseResponse.URL_TYPE_ERROR));
+
+  const itemName = isStart ? 'arrival' : 'departure';
 
   if (terminalNm === undefined) {
     terminalNm = "";
   }
+
   const connection = await pool.getConnection((conn) => conn);
+
   try {
     const deptBusInfo = await busDao.getBusId(connection, terminalNm);
+    // console.log(deptBusInfo);
 
-    let url =
-      "https://apigw.tmoney.co.kr:5556/gateway/xzzLinListGet/v1/lin_list/" +
-      type +
-      "/" +
-      deptBusInfo[0].tmoneyTerId;
+    for(let j in deptBusInfo){
 
-    const result = await axios
-      .get(url, {
-        headers: { "x-Gateway-APIKey": "0ed92177-200d-4143-9d14-acd661a85535" },
-      })
-      .then((result) => {
-        const resultRow = result.data.response.TER_LIST;
+      let url =
+          "https://apigw.tmoney.co.kr:5556/gateway/xzzLinListGet/v1/lin_list/" +
+          type +
+          "/" +
+          deptBusInfo[j].tmoneyTerId;
 
-        return resultRow;
-      });
+      const result = await axios
+          .get(url, {
+            headers: { "x-Gateway-APIKey": "0ed92177-200d-4143-9d14-acd661a85535" },
+          })
+          .then((result) => {
+            const resultRow = result.data.response.TER_LIST;
 
-    let temp = [];
-    for (let i in result) {
-      temp[i] = await busDao.getCityName(connection, result[i].TER_COD);
-    }
-    console.log(temp[0][0].terminalName);
-    if (region !== undefined) {
-      deptBusInfo[0]["arrival"] = temp.filter(
-        (element) => element[0].cityRegion === region
-      );
-    } else {
-      deptBusInfo[0]["arrival"] = temp;
+            return resultRow;
+          });
+
+      let temp = [];
+      for (let i in result) {
+        temp[i] = await busDao.getCityName(connection, result[i].TER_COD);
+      }
+
+      if (region !== undefined) {
+        deptBusInfo[j][itemName] = temp.filter(
+            (element) => element[0].cityRegion === region
+        );
+      }else {
+
+        deptBusInfo[j][itemName] = temp;
+      }
+
     }
 
     // 지역까지 추가해서 response 하는게 너무 비효율일 때, 플랜 B = 이름만 표시하기
@@ -109,6 +125,7 @@ exports.selectMyBus = async function (req, res) {
         }
         */
     connection.release();
+
     return res.send(
       response(baseResponse.SUCCESS("성공하였습니다"), deptBusInfo)
     );
@@ -254,6 +271,7 @@ exports.getNearestTer = async function (req, res) {
         },
       })
       .then((result) => {
+
         return result.data.result;
       });
 
@@ -262,8 +280,8 @@ exports.getNearestTer = async function (req, res) {
     }
 
     let terminalInfo = [];
-    for (let i in terList[0].arrival) {
-      let terminalName = terList[0].arrival[i][0].terminalName;
+    for (let i in terList[0].departure) {
+      let terminalName = terList[0].departure[i][0].terminalName;
       terminalInfo[i] = await busDao.getCoordinate(connection, terminalName);
     }
 
@@ -287,6 +305,8 @@ exports.getNearestTer = async function (req, res) {
         };
       }
     }
+
+    console.log(resultRow);
 
     connection.release();
 

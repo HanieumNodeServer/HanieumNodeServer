@@ -55,5 +55,9 @@ module.exports = {
     code : -1 ,
     message : "해당 날짜는 정보를 제공해드릴 수 없습니다."},
 
+  URL_TYPE_ERROR : {isSuccess : false,
+    code : -1 ,
+    message : "잘못된 api 요청입니다.(타입에러)"},
+
 
 };

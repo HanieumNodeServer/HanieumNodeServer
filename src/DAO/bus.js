@@ -23,8 +23,7 @@ exports.getCityName = async function(connection,id){
 
     const sql = `
     select cityRegion, cityName, terminalName,tmoneyTerId from TERMINAL
-    where tmoneyTerId = ?;
-    `;
+    where tmoneyTerId = ?;`;
 
     const [resultRow] = await connection.query(sql,id);
     return resultRow;
