@@ -20,7 +20,7 @@ exports.getBusId = async function(connection,deptBus){
 }
 
 exports.getCityName = async function(connection,id){
-
+// 정말 정 안되면 빼기
     const sql = `
     select cityRegion, cityName, terminalName,tmoneyTerId from TERMINAL
     where tmoneyTerId = ?;`;
@@ -44,7 +44,7 @@ exports.checkTerminalID = async function(connection,id){
 
 exports.getCoordinate = async function(connection,terminalName){
     const sql = `
-        select terminalName,latitude as lat,longitude as lon 
+        select terminalName,tmoneyTerId,latitude as lat,longitude as lon 
             from TERMINAL
         where terminalName = ?;
     `;

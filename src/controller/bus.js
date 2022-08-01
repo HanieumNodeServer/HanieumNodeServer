@@ -6,6 +6,7 @@ const busDao = require("../DAO/bus");
 const axios = require("axios");
 const haversine = require("haversine");
 const dateUtils = require("date-utils");
+const url = require('url');
 // const qs = require('qs')
 
 const serviceKey = "0ed92177-200d-4143-9d14-acd661a85535";
@@ -82,7 +83,6 @@ exports.selectMyBus = async function (req, res) {
 
   try {
     const deptBusInfo = await busDao.getBusId(connection, terminalNm);
-    // console.log(deptBusInfo);
 
     for(let j in deptBusInfo){
 
@@ -102,8 +102,13 @@ exports.selectMyBus = async function (req, res) {
             return resultRow;
           });
 
-      let temp = [];
-      for (let i in result) {
+
+      deptBusInfo[j][itemName] = result;
+
+
+      // TODO: 안돼. 한방에 처리할 수 있는 로직을 고민해보자. (중요한건 여러번 던지는 일이 없게 하자)-----------
+      // 방안1 : 터미널 코드를 리스트로 가져와서 DB에 한방에 조회할 수 있도록 (인덱스 걸고)
+     /* for (let i in result) {
         temp[i] = await busDao.getCityName(connection, result[i].TER_COD);
       }
 
@@ -112,18 +117,13 @@ exports.selectMyBus = async function (req, res) {
             (element) => element[0].cityRegion === region
         );
       }else {
-
         deptBusInfo[j][itemName] = temp;
-      }
-
+      }*/
+      // TODO: 여기까지-------------------------------------------
     }
 
     // 지역까지 추가해서 response 하는게 너무 비효율일 때, 플랜 B = 이름만 표시하기
-    /*
-        for(let i in result){
-            result[i] = result[i].stationName;
-        }
-        */
+
     connection.release();
 
     return res.send(
@@ -138,6 +138,7 @@ exports.selectMyBus = async function (req, res) {
 
 // TODO : 배차리스트 조회 API 사용 승인 후 API key 및 내부 코드 수정
 exports.getDepartArrival = async function (req, res) {
+
   const departure = req.params.departure;
   const arrival = req.params.arrival;
 
@@ -151,9 +152,13 @@ exports.getDepartArrival = async function (req, res) {
     return res.send(errResponse(baseResponse.OUT_RANGE_DATE));
   }
 
+  console.log("설정 날짜 : " + date);
+
   if (!time) {
     time = now.toFormat("HH24MI");
   }
+
+  console.log("설정 시간 : " + time);
 
   if (!departure || !arrival) {
     return res.send(errResponse(baseResponse.PARAM_EMPTY));
@@ -189,11 +194,13 @@ exports.getDepartArrival = async function (req, res) {
         headers: { "x-Gateway-APIKey": "42e5892b-0e48-4b0b-8cdc-6b9bc8699bc1" },
       })
       .then((result) => {
-        if (result.data.response === undefined) {
+
+        if (result.data.response === undefined || result.data.response === null) {
           return res.send(errResponse(baseResponse.ROUTE_NOT_FOUND));
         }
 
         let data = result.data.response.LINE_LIST;
+        console.log(data);
         let temp = [];
 
         for (let i in data) {
@@ -244,6 +251,10 @@ exports.getDepartArrival = async function (req, res) {
 };
 
 exports.getNearestTer = async function (req, res) {
+
+  let terminalInfo = [];
+  let distance, resultRow;
+
   const terminalNm = req.query.terminalNm;
 
   const user = {
@@ -263,29 +274,36 @@ exports.getNearestTer = async function (req, res) {
   const connection = await pool.getConnection((conn) => conn);
 
   try {
-    const terList = await axios
-      .get("http://localhost:3000/bus/list/selected", {
-        params: {
-          terminalNm: terminalNm,
-          type: "a",
-        },
-      })
-      .then((result) => {
 
-        return result.data.result;
-      });
+    let terList = await axios.get("http://localhost:3000/bus/list/selected",{
+      params: {
+        terminalNm: terminalNm,
+        type: "a",
+      },
+    }).then((result)=>{
+      let data = result.data.result;
 
-    if (terList === undefined) {
+      let index = 0;
+      for(let i in data){
+
+        if(data[index].departure.length <= data[i].departure.length){
+          index = i;
+        }
+      }
+      return data[parseInt(index)]
+
+    })
+
+
+    if (terList === undefined)
       return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
-    }
 
-    let terminalInfo = [];
-    for (let i in terList[0].departure) {
-      let terminalName = terList[0].departure[i][0].terminalName;
+    for (let i in terList.departure) {
+
+      let terminalName = terList.departure[i][0].TER_NAM;
       terminalInfo[i] = await busDao.getCoordinate(connection, terminalName);
-    }
 
-    let distance, resultRow;
+    }
 
     for (let i in terminalInfo) {
       const end = {
@@ -293,27 +311,43 @@ exports.getNearestTer = async function (req, res) {
         longitude: Number(terminalInfo[i][0].lon),
       };
 
+
       if (i === "0") {
+
         distance = haversine(user, end, { unit: "mile" });
         resultRow = {
-          terminalName: terminalInfo[i][0].terminalName,
+          DepartureTerName: terminalInfo[i][0].TER_NAM,
+          DepartureTerId: terminalInfo[i][0].TER_COD
         };
+
       } else if (distance >= haversine(user, end, { unit: "mile" })) {
         distance = haversine(user, end, { unit: "mile" });
+
         resultRow = {
-          terminalName: terminalInfo[i][0].terminalName,
+          DepartureTerName: terminalInfo[i][0].TER_NAM,
+          DepartureTerId: terminalInfo[i][0].TER_COD
         };
+
       }
+
     }
 
-    console.log(resultRow);
+    let finalResultRow = Object.assign(resultRow,
+        {
+          arrivalTerName : terList.TER_NAM,
+          arrivalTerId: terList.TER_COD
+        });
 
     connection.release();
 
-    return res.send(response(baseResponse.SUCCESS("성공입니다."), resultRow));
+    return res.send(response(baseResponse.SUCCESS("성공입니다."), finalResultRow));
+
   } catch (err) {
+
     logger.warn("[에러발생]" + err);
+
     connection.release();
+
     return res.send(errResponse(baseResponse.FAIL));
   }
 };
@@ -390,3 +424,134 @@ exports.getSeatList = async function (req, res) {
     return res.send(errResponse(baseResponse.FAIL));
   }
 };
+
+exports.autoReserveController = async function(req,res){
+
+  const user = {
+    latitude: req.query.latitude,
+    longitude: req.query.longitude,
+  };
+
+  const { terSfr, terSto, date, time } = req.body;
+  let arrival, departure;
+
+  if((!terSfr || terSfr === "") &&
+      (terSto !== undefined || terSto !== "")){
+
+    res.redirect(url.format({
+      pathname:"/bus/reservation/auto/ai/no-depart",
+      query:{
+        arrivalKeyword : terSto,
+        time : time,
+        latitude : user.latitude,
+        longitude : user.longitude,
+        date : date
+      }
+    }));
+
+  }else{
+
+    res.redirect(url.format({
+      pathname: "bus/reservation/auto/ai/depart",
+      query:{
+        departKeyword: terSfr,
+        arrivalKeyword : terSto,
+        time : time,
+        latitude : user.latitude,
+        longitude : user.longitude,
+        date : date
+      }
+    }))
+
+  }
+
+}
+
+exports.autoReserveNoDepart = async function(req,res) {
+
+  const arrivalKeyword = req.query.arrivalKeyword;
+  const time = req.query.time;
+  const date = req.query.date;
+
+  const user = {
+    latitude: Number(req.query.latitude),
+    longitude: Number(req.query.longitude),
+  };
+
+  try{
+
+// TODO: 함수화해서 하자
+    let departure = await axios.get("http://localhost:3000/terminal/list/nearest", {
+      params: {
+        terminalNm: arrivalKeyword,
+        type: "a",
+        latitude: "37.6199365",
+        longitude: "127.0610036"
+      },
+    }).then((result)=>{
+      return result.data.result;
+    })
+
+    console.log(departure);
+
+    let url = 'http://localhost:3000/bus/list/' +
+        departure.DepartureTerId +
+        '/' +
+        departure.arrivalTerId;
+
+    let routeInfo = await axios.get(url,{
+      params: {
+        date : date,
+        time : time
+      },
+    }).then((result)=>{
+      return result.data.result;
+    })
+
+    if(routeInfo === undefined) return res.send(errResponse(baseResponse.EMPTY_NEAREST_TER_ROUTE));
+
+    let resultRow = {
+      departure : departure.DepartureTerName,
+      arrival : departure.arrivalTerName,
+      routeList: routeInfo
+    }
+
+    return res.send(response(baseResponse.SUCCESS("성공입니다."),resultRow));
+
+
+
+  }catch (err) {
+    logger.warn("[에러발생]" + err);
+    return res.send(errResponse(baseResponse.FAIL));
+  }
+
+}
+
+exports.autoReserveDepart = async function(req,res){
+
+/*
+  const departKeyword = req.query.departKeyword;
+  const arrivalKeyword = req.query.arrivalKeyword;
+  const time = req.query.time;
+  const date = req.query.date;
+  */
+  const {departKeyword, arrivalKeyword, time, date} = req.query;
+
+  const user = {
+    latitude: Number(req.query.latitude),
+    longitude: Number(req.query.longitude),
+  };
+
+  const connection = await pool.getConnection((conn)=>conn);
+
+  try{
+
+
+
+  }catch (err) {
+
+
+
+  }
+
+}
