@@ -59,5 +59,9 @@ module.exports = {
     code : -1 ,
     message : "잘못된 api 요청입니다.(타입에러)"},
 
+  EMPTY_NEAREST_TER_ROUTE : {isSuccess : false,
+    code : -1 ,
+    message : "현재 가장 가까운 터미널에서 목적지를 향하는 버스가 없습니다."},
+
 
 };
