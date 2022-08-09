@@ -1,5 +1,29 @@
-exports.getBusList = async function(connection,busInfoParams,where) {
+exports.indexTestQuery = async function(connection) {
+    const query = `
+    select *
+    from test;
+    `
+
+    const [array] = await connection.query(query);
+    return array;
+
+}
+
+exports.insertTestQuery = async function(connection,params){
     const sql = `
+    INSERT INTO 
+        test.user(userId, name, identificationId, phoneNum)
+    VALUES (?, ?, ?, ?);
+    `;
+
+    const [array] = await connection.query(sql,params);
+    return array;
+
+}
+
+exports.getBusList = async function (connection, busInfoParams, where) {
+    const sql =
+        `
 select cityRegion,cityName,terminalName from TERMINAL` +
         where +
         `order by tmoneyTerId;`;
@@ -7,49 +31,112 @@ select cityRegion,cityName,terminalName from TERMINAL` +
     const [resultRow] = await connection.query(sql);
 
     return resultRow;
+};
 
-}
+exports.searchBusKeyword = async function(connection,terminalNm){
+    const sql = `select cityRegion,cityName,tmoneyTerId,terminalName from TERMINAL where terminalName like` +
+        " '%" +
+        terminalNm +
+        "%';";
 
-exports.getBusId = async function(connection,deptBus){
+    const [resultRow] = await connection.query(sql);
 
-    const sql = `select tmoneyTerId,terminalName from TERMINAL where terminalName like` + ' \'%' + deptBus + '%\';';
-
-    const [resultRow] = await connection.query(sql,deptBus);
     return resultRow;
 
 }
 
-exports.getCityName = async function(connection,id){
-// 정말 정 안되면 빼기
+exports.getRouteDepart = async function(connection,terminalId){
     const sql = `
-    select cityRegion, cityName, terminalName,tmoneyTerId from TERMINAL
-    where tmoneyTerId = ?;`;
-
-    const [resultRow] = await connection.query(sql,id);
-    return resultRow;
-
-}
-
-exports.checkTerminalID = async function(connection,id){
-    const sql = `
-    select tmoneyTerId,terminalName 
-    from TERMINAL 
-    where tmoneyTerId = ?;
+            select routeId,cityRegion,cityName,arrivalTerId,arrivalTerName 
+                from route
+                    inner join terminal t on route.arrivalTerId = t.tmoneyTerId
+            where departTerId = ?;
     `;
 
-    const [resultRow] = await connection.query(sql,id);
+    const [resultRow] = await connection.query(sql,terminalId);
+
     return resultRow;
 
 }
 
-exports.getCoordinate = async function(connection,terminalName){
+exports.getRouteArrival = async function(connection,terminalId){
     const sql = `
-        select terminalName,tmoneyTerId,latitude as lat,longitude as lon 
-            from TERMINAL
-        where terminalName = ?;
+            select routeId,cityRegion,cityName,departTerId,departTerName,latitude,longitude
+                from route
+                    inner join terminal t on route.departTerId = t.tmoneyTerId
+            where arrivalTerId = ?;
     `;
 
-    const [resultRow] = await connection.query(sql,terminalName);
+    const [resultRow] = await connection.query(sql,terminalId);
+
+    return resultRow;
+
+}
+
+exports.checkRouteID = async function(connection,routeId){
+    const sql = `
+        select routeId, departTerId, arrivalTerId, departTerName, arrivalTerName 
+            from route 
+        where routeId = ?;
+
+    `;
+
+    const [resultRow] = await connection.query(sql,routeId);
+
+    return resultRow
+
+}
+
+exports.getRouteSchedule = async function(connection,routeId,date){
+    const sql = `
+            select corName,time,rotId,rotSqno,busGrade,alcnSqno,durationTime
+                from schedule
+            where routeId = ? and allocateDate = ?
+            order by time;
+    `;
+
+    const [resultRow] = await connection.query(sql,[routeId,date]);
+
+    return resultRow;
+}
+
+exports.getRequestParams = async function(connection,routeId,date,time){
+
+    const sql = `
+            select rotId,rotSqno,alcnSqno 
+                from schedule
+            where routeId = ? 
+                and time = ? 
+                and allocateDate = ?;
+    `
+
+    const [resultRow] = await connection.query(sql,[routeId,date,time]);
+
+    return resultRow;
+
+}
+
+exports.getAllRoute = async function(connection){
+    const sql = `
+        select routeId from schedule
+        group by routeId;
+    `;
+
+    const [resultRow] = await connection.query(sql);
+
+    return resultRow;
+}
+
+exports.getRouteDepartAI = async function(connection, terminalId, arrivalKeyword){
+
+    const sql = `
+        select routeId,arrivalTerId,arrivalTerName 
+            from route    
+        where departTerId = ? and arrivalTerName like` + ' \'%'+ arrivalKeyword +'%\';';
+
+
+    const [resultRow] = await connection.query(sql,terminalId);
+
     return resultRow;
 
 }

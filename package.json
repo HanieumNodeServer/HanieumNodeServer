@@ -16,8 +16,12 @@
     "haversine": "^1.1.1",
     "jsonwebtoken": "^8.5.1",
     "loglevel": "^1.8.0",
+    "moment": "^2.29.4",
     "morgan": "~1.9.1",
     "mysql2": "^2.3.3",
     "nodemon": "^2.0.16"
+  },
+  "devDependencies": {
+    "moment-timezone": "^0.5.34"
   }
 }
