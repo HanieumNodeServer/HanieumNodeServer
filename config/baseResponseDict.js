@@ -63,5 +63,21 @@ module.exports = {
     code : -1 ,
     message : "현재 가장 가까운 터미널에서 목적지를 향하는 버스가 없습니다."},
 
+  WRONG_PARAM_TYPE : {isSuccess : false,
+    code : -1 ,
+    message : "잘못된 함수 인자입니다."},
+
+  EMPTY_ROUTE_ID : {isSuccess : false,
+    code : -1 ,
+    message : "해당하는 노선 정보가 없습니다."},
+
+  WRONG_TIME_PAST : {isSuccess : false,
+    code : -1 ,
+    message : "이미 지난 시각의 좌석은 조회할 수 없습니다."},
+
+  WRONG_TIME_PARAMS : {isSuccess : false,
+    code : -1 ,
+    message : "출발 시각과 도착 시각 중 하나만 말씀해주세요"},
+
 
 };

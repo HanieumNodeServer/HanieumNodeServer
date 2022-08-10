@@ -222,9 +222,12 @@ exports.getNearestTerTwo = async function(req,res){
     list[i] = temp[i].departure;
   }
 
+  console.log(list);
   const array = await busFunction.checkExistRoute(list);
+  console.log(array);
 
   const resultRow = await busFunction.getNearestTerminal(array,user);
+  console.log(resultRow);
 
   if(resultRow === undefined){
     return errResponse(baseResponse.TERMINAL_NOT_FOUND);
