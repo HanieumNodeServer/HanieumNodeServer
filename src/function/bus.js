@@ -63,6 +63,7 @@ exports.getDepartArrival = async function(type,terminalNm,region,itemName){
         }
 
     }catch (err) {
+
         logger.warn(err + "에러 발생");
         connection.release();
         return errResponse(baseResponse.FAIL);

@@ -1,26 +1,3 @@
-exports.indexTestQuery = async function(connection) {
-    const query = `
-    select *
-    from test;
-    `
-
-    const [array] = await connection.query(query);
-    return array;
-
-}
-
-exports.insertTestQuery = async function(connection,params){
-    const sql = `
-    INSERT INTO 
-        test.user(userId, name, identificationId, phoneNum)
-    VALUES (?, ?, ?, ?);
-    `;
-
-    const [array] = await connection.query(sql,params);
-    return array;
-
-}
-
 exports.getBusList = async function (connection, busInfoParams, where) {
     const sql =
         `
@@ -48,8 +25,8 @@ exports.searchBusKeyword = async function(connection,terminalNm){
 exports.getRouteDepart = async function(connection,terminalId){
     const sql = `
             select routeId,cityRegion,cityName,arrivalTerId,arrivalTerName 
-                from route
-                    inner join terminal t on route.arrivalTerId = t.tmoneyTerId
+                from ROUTE
+                    inner join TERMINAL t on ROUTE.arrivalTerId = t.tmoneyTerId
             where departTerId = ?;
     `;
 
@@ -62,8 +39,8 @@ exports.getRouteDepart = async function(connection,terminalId){
 exports.getRouteArrival = async function(connection,terminalId){
     const sql = `
             select routeId,cityRegion,cityName,departTerId,departTerName,latitude,longitude
-                from route
-                    inner join terminal t on route.departTerId = t.tmoneyTerId
+                from ROUTE
+                    inner join TERMINAL t on ROUTE.departTerId = t.tmoneyTerId
             where arrivalTerId = ?;
     `;
 
@@ -76,10 +53,11 @@ exports.getRouteArrival = async function(connection,terminalId){
 exports.checkRouteID = async function(connection,routeId){
     const sql = `
         select routeId, departTerId, arrivalTerId, departTerName, arrivalTerName 
-            from route 
+            from ROUTE 
         where routeId = ?;
 
     `;
+    console.log(sql+routeId);
 
     const [resultRow] = await connection.query(sql,routeId);
 
@@ -90,7 +68,7 @@ exports.checkRouteID = async function(connection,routeId){
 exports.getRouteSchedule = async function(connection,routeId,date){
     const sql = `
             select corName,time,rotId,rotSqno,busGrade,alcnSqno,durationTime
-                from schedule
+                from SCHEDULE
             where routeId = ? and allocateDate = ?
             order by time;
     `;
@@ -104,7 +82,7 @@ exports.getRequestParams = async function(connection,routeId,date,time){
 
     const sql = `
             select rotId,rotSqno,alcnSqno 
-                from schedule
+                from SCHEDULE
             where routeId = ? 
                 and time = ? 
                 and allocateDate = ?;
@@ -118,7 +96,7 @@ exports.getRequestParams = async function(connection,routeId,date,time){
 
 exports.getAllRoute = async function(connection){
     const sql = `
-        select routeId from schedule
+        select routeId from SCHEDULE
         group by routeId;
     `;
 
@@ -131,7 +109,7 @@ exports.getRouteDepartAI = async function(connection, terminalId, arrivalKeyword
 
     const sql = `
         select routeId,arrivalTerId,arrivalTerName 
-            from route    
+            from ROUTE    
         where departTerId = ? and arrivalTerName like` + ' \'%'+ arrivalKeyword +'%\';';
 
 
