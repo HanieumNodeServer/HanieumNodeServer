@@ -240,8 +240,6 @@ exports.getDepartList = async function(temp){
             (element, i) => data.includes(element.routeId)
         )
 
-        console.log(list.length)
-
         connection.release;
 
         return list;
@@ -344,12 +342,23 @@ exports.getArrTimeDispatch = async function(arrTime,dispatch,j){
             if(!recom)
                 return errResponse(baseResponse.TERMINAL_NOT_FOUND);
 
+            if(!j){
+                resultRow = {
+                    departure: dispatch.result.departure,
+                    arrival: dispatch.result.arrival,
+                    LINE: recom
+                }
+
+
+                return response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow);
+            }
 
             resultRow[j] = {
                 departure: dispatch.result.departure,
                 arrival: dispatch.result.arrival,
                 LINE: recom
             }
+
             return response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow);
         }
 

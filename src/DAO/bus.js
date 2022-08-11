@@ -57,7 +57,6 @@ exports.checkRouteID = async function(connection,routeId){
         where routeId = ?;
 
     `;
-    console.log(sql+routeId);
 
     const [resultRow] = await connection.query(sql,routeId);
 

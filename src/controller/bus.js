@@ -186,7 +186,6 @@ exports.getNearestTer = async function(req,res){
 
 
   }
-  console.log(resultRow);
 
   return res.send(response(baseResponse.SUCCESS("현재 위치에서 출발할 수 있는 가장 가까운 터미널 정보입니다."),resultRow));
 
@@ -222,12 +221,9 @@ exports.getNearestTerTwo = async function(req,res){
     list[i] = temp[i].departure;
   }
 
-  console.log(list);
   const array = await busFunction.checkExistRoute(list);
-  console.log(array);
 
   const resultRow = await busFunction.getNearestTerminal(array,user);
-  console.log(resultRow);
 
   if(resultRow === undefined){
     return errResponse(baseResponse.TERMINAL_NOT_FOUND);
@@ -436,7 +432,7 @@ exports.autoReserveDepart = async function(req,res){
     }
   }
 
-  return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow));
+  return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow));
 
 
 }

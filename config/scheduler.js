@@ -6,9 +6,9 @@ const batchStart = require("./batch");
 function batch(){
 
 // 매일 자정은 0 0 0 * * *
-    cron.schedule('0 0 0 * * * ',async function(){
+    cron.schedule('0 33 * * * * ',async function(){
         console.log("배치 시작");
-        await batchStart.start();
+        batchStart.start();
     });
 
 }
