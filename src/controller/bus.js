@@ -130,6 +130,7 @@ exports.getSeatList = async function (req, res) {
     return res.send(errResponse(baseResponse.WRONG_TIME_PAST));
 
   const resultRow = await busFunction.getSeatInfo(routeId,date,time);
+  console.log(resultRow);
 
   return res.send(resultRow);
 
@@ -240,7 +241,23 @@ exports.autoReserveController = async function(req,res){
     longitude: req.query.longitude,
   };
 
-  const { terSfr, terSto, date, time, arrTime } = req.body;
+  let terSfr, terSto, date, time, arrTime;
+
+  const string = req.body.string;
+
+  const filteringData = await axios.post("http://127.0.0.1:5001",{
+    string : string
+  }).then((result)=>{
+
+    terSfr = result.data.response.terSfr;
+    terSto = result.data.response.terSto;
+    date = result.data.response.date;
+    time = result.data.response.time;
+    arrTime = result.data.response.arrTime;
+
+  })
+
+
 
   if ((!terSfr || terSfr === "") && (terSto !== undefined || terSto !== "")) {
     res.redirect(
@@ -432,7 +449,53 @@ exports.autoReserveDepart = async function(req,res){
     }
   }
 
-  return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow));
+  return res.send(response(
+      baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"+resultRow)));
 
+
+}
+
+exports.reserveTicket = async function(req,res){
+
+  const userId = '1'; // 나중에 바꾸기
+
+  const {departTerId , arrivalTerId, startTime, arrivalTime, corName, charge, seat} = req.body;
+
+  const params = [userId, departTerId , arrivalTerId, startTime, arrivalTime, corName, charge, seat];
+
+  if(!departTerId || !arrivalTerId){
+    return res.send(errResponse(baseResponse.EMPTY_TERMINAL_PARAMS))
+  }
+  else if(!startTime || !arrivalTime){
+
+    return res.send(errResponse(baseResponse.EMPTY_TIME_PARAMS))
+
+  }else if(!corName || !charge || !seat){
+
+    return res.send(errResponse(baseResponse.EMPTY_BUSINFO_PARAMS))
+
+  }
+
+  const connection = await pool.getConnection((conn)=>conn);
+
+  try{
+
+    await connection.beginTransaction();
+
+    const resultRow = await busDao.insertTicketingInfo(connection,params);
+
+    await connection.commit();
+
+    connection.release();
+
+    return res.send(response(baseResponse.SUCCESS("예매에 성공했습니다.")));
+  }catch (err){
+
+    await connection.rollback();
+    logger.warn(err + "에러 발생");
+    connection.release();
+    return errResponse(baseResponse.FAIL);
+
+  }
 
 }
