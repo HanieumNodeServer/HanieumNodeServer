@@ -142,7 +142,7 @@ exports.getSeatInfo = async function(routeId,date,time){
         let resultRow = await axios
             .get(url, {
                 headers: {
-                    "x-Gateway-APIKey": "501f3526-d732-4562-a3a9-178a75690b44",
+                    "x-Gateway-APIKey": "87629737-0c2a-4262-b595-e5d3946ce5c8",
                 },
             })
             .then((result) => {

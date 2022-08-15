@@ -117,3 +117,17 @@ exports.getRouteDepartAI = async function(connection, terminalId, arrivalKeyword
     return resultRow;
 
 }
+
+exports.insertTicketingInfo = async function(connection,params){
+
+    const sql = `
+    insert into TICKETING(userId, departTerId, arrivalTerId, startTime, arrivalTime, corName, charge, seat) 
+    values (?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+
+
+    const [resultRow] = await connection.query(sql,params);
+
+    return resultRow;
+
+}

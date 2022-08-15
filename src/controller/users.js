@@ -88,9 +88,10 @@ exports.getReserveInfo = async function (req, res) {
     const userId = token.userId;*/
 
   const userId = req.query.userId;
+  const connection = await pool.getConnection((conn) => conn);
 
   try {
-    const connection = await pool.getConnection((conn) => conn);
+
 
     const isUser = await userDao.checkUserStatus(connection, userId);
 
@@ -105,9 +106,8 @@ exports.getReserveInfo = async function (req, res) {
     }
 
     let info = temp.filter(
-      (element) => element.status === "예약중" || element.status === "탑승중"
+      (element) => element.status === "Reserving" || element.status === "Onboarding"
     );
-    console.log(info);
 
     if (!info[0]) {
       return res.send(errResponse(baseResponse.USER_RESERVATION_EMPTY));
@@ -118,7 +118,11 @@ exports.getReserveInfo = async function (req, res) {
       result: info,
     };
 
+    connection.release();
+
     return res.send(response(baseResponse.SUCCESS("성공입니다."), resultRow));
+
+
   } catch (err) {
     logger.warn("[에러발생]" + err);
     return res.send(errResponse(baseResponse.FAIL));

@@ -22,4 +22,8 @@ router.get("/bus/reservation/auto/ai/depart", bus.autoReserveDepart);
 
 router.get("/bus/reservation/auto/ai/no-depart", bus.autoReserveNoDepart);
 
+router.post("/bus/reservation/ticket",bus.reserveTicket);
+
+// router.post("/bus/chatting/ai/server",bus.sendAiServer);
+
 module.exports = router;

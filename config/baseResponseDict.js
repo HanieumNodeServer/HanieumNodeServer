@@ -79,5 +79,15 @@ module.exports = {
     code : -1 ,
     message : "출발 시각과 도착 시각 중 하나만 말씀해주세요"},
 
+  EMPTY_TERMINAL_PARAMS : {isSuccess : false,
+    code : -1 ,
+    message : "출•도착 터미널 정보가 비어있습니다"},
 
+  EMPTY_TIME_PARAMS : {isSuccess : false,
+    code : -1 ,
+    message : "출발 시각과 도착 시각 중 하나가 비어있습니다"},
+
+  EMPTY_BUSINFO_PARAMS : {isSuccess : false,
+    code : -1 ,
+    message : "올바른 버스 정보를 입력해주세요"},
 };

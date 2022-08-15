@@ -11,21 +11,21 @@ exports.checkUserStatus = async function (connection, userId) {
 
 exports.getUserReservation = async function (connection, userId) {
   const sql = `
-select D.terminalName as '출발지' ,A.terminalName as '도착지',charge as '요금', corName as '운행회사',concat(seat,'번') as '좌석번호',
-       time_format(startTime,'%h시%m분 %p') as '출발시간', time_format(arrivalTime,'%h시%m분 %p') as '도착시간',
+select D.terminalName as DepartTerminal ,A.terminalName as ArrivalTerminal,charge, corName,concat(seat,'번') as seat,
+       startTime, arrivalTime,
 
        case
-           when (TICKETING.status = 'R') then '예약중'
-           when (TICKETING.status = 'T') then '탑승중'
-           when (TICKETING.status = 'C') then '취소'
-           when (TICKETING.status = 'U') then '사용 완료'
+           when (TICKETING.status = 'R') then 'Reserving'
+           when (TICKETING.status = 'T') then 'Onboarding'
+           when (TICKETING.status = 'C') then 'Cancel'
+           when (TICKETING.status = 'U') then 'Used'
         else '조회 불가'
            end as status
 
 from TICKETING
 inner join TERMINAL A on TICKETING.arrivalTerId = A.tmoneyTerId
 inner join TERMINAL D on TICKETING.departTerId = D.tmoneyTerId
-where userId = '2';
+where userId = ?;
     `;
 
   const [resultRow] = await connection.query(sql, userId);
