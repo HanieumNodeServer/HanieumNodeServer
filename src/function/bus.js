@@ -151,6 +151,7 @@ exports.getSeatInfo = async function(routeId,date,time){
                     TOTAL_SEAT_CNT: result.data.response.TOT_CNT,
                     REST_SEAT_CNT: result.data.response.OCC_Y_CNT,
                     SEAT_LIST: result.data.response.SEAT_LIST,
+                    FEE: result.data.response.TCK_FEE1
                 };
 
                 return resultRow;
@@ -402,3 +403,72 @@ exports.getDepartListAI = async function(departKeyword,arrivalKeyword){
 
 }
 
+exports.getTerminalId = async function(routeId){
+
+    const connection = await pool.getConnection((conn)=>conn);
+
+    try{
+
+        const checkRouteId = await busDao.checkRouteID(connection,routeId);
+
+        connection.release();
+
+        return checkRouteId;
+
+    }catch (err) {
+        logger.warn(err + "에러 발생");
+        connection.release();
+        return errResponse(baseResponse.FAIL);
+    }
+
+}
+
+exports.getCorName = async function(routeId,date,startTime,rotId){
+
+    const connection = await pool.getConnection((conn)=>conn);
+
+    try{
+
+        const resultRow = await busDao.getCorName(connection,routeId,date,startTime,rotId);
+        console.log(resultRow);
+
+        return resultRow
+
+    }catch (err) {
+        logger.warn(err + "에러 발생");
+        connection.release();
+        return errResponse(baseResponse.FAIL);
+    }
+
+}
+
+exports.calculateArrivalTime = async function(startTime,duration){
+
+    try{
+
+        let arrHour = startTime.toString().substr(0, 2);
+        let arrMin = startTime.toString().substr(2, 4);
+
+        let calHour = Math.floor(((parseInt(arrHour) * 60 + parseInt(arrMin)) +
+            duration) / 60)
+            .toString();
+        let calMin = Math.floor(((parseInt(arrHour) * 60 + parseInt(arrMin)) +
+            duration) % 60)
+            .toString();
+
+        if(calMin === '0')
+            calMin = '00';
+
+
+        let calculatedTime = calHour + calMin;
+
+        return calculatedTime;
+
+    }catch (err) {
+
+        logger.warn(err + "에러 발생");
+        return errResponse(baseResponse.FAIL);
+
+    }
+
+}
