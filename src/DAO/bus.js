@@ -55,7 +55,6 @@ exports.checkRouteID = async function(connection,routeId){
         select routeId, departTerId, arrivalTerId, departTerName, arrivalTerName 
             from ROUTE 
         where routeId = ?;
-
     `;
 
     const [resultRow] = await connection.query(sql,routeId);
@@ -130,4 +129,17 @@ exports.insertTicketingInfo = async function(connection,params){
 
     return resultRow;
 
+}
+
+exports.getCorName = async function(connection,routeId,date,startTime,rotId){
+
+    const sql = `
+    select * 
+        from SCHEDULE 
+    where routeId = ? and allocateDate = ? and time = ? and rotId = ?;
+    `
+
+    const [resultRow] = await connection.query(sql,[routeId,date,startTime,rotId]);
+
+    return resultRow;
 }

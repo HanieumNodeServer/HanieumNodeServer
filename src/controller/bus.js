@@ -123,14 +123,17 @@ exports.getSeatList = async function (req, res) {
   let now = new Date();
   let present = now.toFormat("HH24MI");
 
-  if(parseInt(date) < parseInt(moment().format("YYYYMMDD")))
+  if(parseInt(date) < parseInt(moment().format("YYYYMMDD"))){
+
+    if(parseInt(present) > parseInt(time)){
+      return res.send(errResponse(baseResponse.WRONG_TIME_PAST));
+    }
+
     return res.send(errResponse(baseResponse.OUT_RANGE_DATE));
 
-  if(parseInt(present) > parseInt(time))
-    return res.send(errResponse(baseResponse.WRONG_TIME_PAST));
+  }
 
   const resultRow = await busFunction.getSeatInfo(routeId,date,time);
-  console.log(resultRow);
 
   return res.send(resultRow);
 
@@ -241,12 +244,30 @@ exports.autoReserveController = async function(req,res){
     longitude: req.query.longitude,
   };
 
+
+
   let terSfr, terSto, date, time, arrTime;
 
+  let object = {
+    "terSfr" : "",
+    "terSto" : "",
+    "date" : "",
+    "time" : "",
+    "arrTime" : ""
+  }
+
   const string = req.body.string;
+  const body = req.body.body;
+  console.log(body);
+
+
+
+  let stringSearch = string.search('예약')
+  console.log(stringSearch)
 
   const filteringData = await axios.post("http://127.0.0.1:5001",{
-    string : string
+    string : string,
+    object : object
   }).then((result)=>{
 
     terSfr = result.data.response.terSfr;
@@ -319,6 +340,7 @@ exports.autoReserveNoDepart = async function(req,res){
     longitude: Number(req.query.longitude),
   };
 
+
   if (!date) {
     date = now.toFormat("YYYYMMDD");
   } else if (parseInt(date) > parseInt(moment().add(30,"days").format("YYYYMMDD"))) {
@@ -342,7 +364,9 @@ exports.autoReserveNoDepart = async function(req,res){
   const routeRow = await busFunction.getNearestTerminal(array,user);
 
   if(routeRow === undefined){
+
     return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+
   }
 
   const dispatch = await busFunction.getRouteSchedule(date,time,routeRow[0].routeId);
@@ -358,11 +382,17 @@ exports.autoReserveNoDepart = async function(req,res){
     return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
   }
 
+
+
   const resultRow = {
+    routeId : routeRow[0].routeId,
+    date : date,
     departure: dispatch.result.departure,
     arrival: dispatch.result.arrival,
     LINE: dispatch.result.LINE[0]
   }
+
+
   return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow));
 
 }
@@ -459,11 +489,21 @@ exports.reserveTicket = async function(req,res){
 
   const userId = '1'; // 나중에 바꾸기
 
-  const {departTerId , arrivalTerId, startTime, arrivalTime, corName, charge, seat} = req.body;
+  const {routeId, date ,startTime, rotId, charge, seat, duration} = req.body;
 
-  const params = [userId, departTerId , arrivalTerId, startTime, arrivalTime, corName, charge, seat];
+  const terminalId = await busFunction.getTerminalId(routeId);
 
-  if(!departTerId || !arrivalTerId){
+  const corName = await busFunction.getCorName(routeId,date,startTime,rotId);
+
+  const arrivalTime = await busFunction.calculateArrivalTime(startTime,duration);
+
+  const params = [userId, terminalId[0].departTerId ,
+    terminalId[0].arrivalTerId, startTime,
+    arrivalTime, corName[0].corName, charge, seat];
+
+  console.log(params)
+
+  if(!terminalId[0].departTerId  || !terminalId[0].arrivalTerId){
     return res.send(errResponse(baseResponse.EMPTY_TERMINAL_PARAMS))
   }
   else if(!startTime || !arrivalTime){
