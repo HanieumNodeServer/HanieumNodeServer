@@ -497,16 +497,19 @@ exports.reserveTicket = async function(req,res){
 
   const arrivalTime = await busFunction.calculateArrivalTime(startTime,duration);
 
-  const params = [userId, terminalId[0].departTerId ,
-    terminalId[0].arrivalTerId, startTime,
-    arrivalTime, corName[0].corName, charge, seat];
+  const startTimeDate = date.concat('',startTime)+"00";
 
-  console.log(params)
+  const arrivalTimeDate = date.concat('',arrivalTime)+"00";
+
+  const params = [userId, terminalId[0].departTerId ,
+    terminalId[0].arrivalTerId, startTimeDate,
+    arrivalTimeDate, corName[0].corName, charge, seat];
+
 
   if(!terminalId[0].departTerId  || !terminalId[0].arrivalTerId){
     return res.send(errResponse(baseResponse.EMPTY_TERMINAL_PARAMS))
   }
-  else if(!startTime || !arrivalTime){
+  else if(!startTimeDate || !arrivalTimeDate){
 
     return res.send(errResponse(baseResponse.EMPTY_TIME_PARAMS))
 

@@ -446,8 +446,8 @@ exports.calculateArrivalTime = async function(startTime,duration){
 
     try{
 
-        let arrHour = startTime.toString().substr(0, 2);
-        let arrMin = startTime.toString().substr(2, 4);
+        let arrHour = startTime.substr(0, 2);
+        let arrMin = startTime.substr(2, 4);
 
         let calHour = Math.floor(((parseInt(arrHour) * 60 + parseInt(arrMin)) +
             duration) / 60)
