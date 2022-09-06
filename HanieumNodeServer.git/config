@@ -1,0 +1,11 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/HanieumNodeServer/HanieumNodeServer.git
+	fetch = +refs/*:refs/*
+	mirror = true
+	pushurl = https://lab.hanium.or.kr/22_HF068/call-vroong-backend.git
