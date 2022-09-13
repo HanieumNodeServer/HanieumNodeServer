@@ -94,6 +94,7 @@ async function prepareBatch(today){
 }
 */
 
+const secret = require("./secret")
 const { pool } = require("./database");
 const axios = require('axios');
 const moment = require('moment');
@@ -133,7 +134,7 @@ async function getRouteData (temp) {
         await axios({
             method : 'get',
             url: url[i],
-            headers: { "x-Gateway-APIKey": "0ed92177-200d-4143-9d14-acd661a85535" }
+            headers: { "x-Gateway-APIKey": secret.ROUTE_INFO_LIST }
         }).then((result)=>{
 
             let sql = `insert into ROUTE(departTerId, arrivalTerId, departTerName, arrivalTerName) values (?,?,?,?);`;
@@ -201,7 +202,7 @@ const insertSchedule = async function (terminalId, dateArray, connection, sql) {
 
         // promises2.push(axios.get(url,{headers:{"x-Gateway-APIKey": "42e5892b-0e48-4b0b-8cdc-6b9bc8699bc1"}}));
 
-        let result = await axios.get(url,{headers:{"x-Gateway-APIKey": "42e5892b-0e48-4b0b-8cdc-6b9bc8699bc1"}})
+        let result = await axios.get(url,{headers:{"x-Gateway-APIKey": secret.DISPATCH_INFO_LIST}})
             .then((result)=>{
 
                 console.log(j +" 번째");
