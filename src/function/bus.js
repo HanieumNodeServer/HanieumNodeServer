@@ -5,6 +5,7 @@ const axios = require("axios");
 const { pool } = require("../../config/database");
 const { response, errResponse } = require("../../config/response");
 const haversine = require("haversine");
+const secret = require("../../config/secret");
 const moment = require("moment");
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
@@ -142,11 +143,11 @@ exports.getSeatInfo = async function(routeId,date,time){
         let resultRow = await axios
             .get(url, {
                 headers: {
-                    "x-Gateway-APIKey": "87629737-0c2a-4262-b595-e5d3946ce5c8",
+                    "x-Gateway-APIKey": secret.SEAT_INFO_LIST,
                 },
             })
             .then((result) => {
-
+                console.log(result);
                 let resultRow = {
                     TOTAL_SEAT_CNT: result.data.response.TOT_CNT,
                     REST_SEAT_CNT: result.data.response.OCC_Y_CNT,

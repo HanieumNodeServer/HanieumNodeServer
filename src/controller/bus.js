@@ -11,6 +11,16 @@ const url = require("url");
 const moment = require("moment");
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
+const fs = require('fs')
+const dotenv = require('dotenv')
+const secretKey = require('../../config/secret');
+
+dotenv.config({
+  path : "APIKey.env"
+});
+
+
+
 
 exports.getBusList = async function(req,res){
   let regionNm = req.query.regionNm;
@@ -541,4 +551,49 @@ exports.reserveTicket = async function(req,res){
 
   }
 
+}
+
+exports.apiKeyTest = async function(req,res){
+
+  const message = secretKey.TEST;
+  const message2 = secretKey.ROUTE_INFO_LIST;
+  const message3 = secretKey.DISPATCH_INFO_LIST;
+  const message4 = secretKey.SEAT_INFO_LIST;
+
+  const object = {
+    TEST : message,
+    ROUTE_INFO_KEY : message2,
+    DISPATCH_INFO_KEY : message3,
+    SEAT_INFO_KEY : message4,
+  }
+
+
+  try{
+    console.log(secretKey.TEST);
+    return res.send(response(baseResponse.SUCCESS("성공"), object));
+
+  }catch (err){
+    logger.warn(err + "에러 발생");
+    return errResponse(baseResponse.FAIL);
+  }
+
+
+
+}
+
+exports.apiKey = async function(req,res){
+
+  const input = req.body.input;
+
+  try{
+
+    secretKey.TEST = input;
+
+    console.log(secretKey.TEST);
+    return res.send(response(baseResponse.SUCCESS("성공적으로 수정했습니다."),secretKey.TEST));
+
+  }catch (err){
+    logger.warn(err + "에러 발생");
+    return errResponse(baseResponse.FAIL);
+  }
 }
