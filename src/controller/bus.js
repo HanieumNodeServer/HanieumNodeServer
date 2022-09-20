@@ -239,6 +239,8 @@ exports.getNearestTerTwo = async function(req,res){
 
   const resultRow = await busFunction.getNearestTerminal(array,user);
 
+  console.log(resultRow);
+
   if(resultRow === undefined){
     return errResponse(baseResponse.TERMINAL_NOT_FOUND);
   }
@@ -269,22 +271,23 @@ exports.autoReserveController = async function(req,res){
   const string = req.body.string;
   const body = req.body.body;
   console.log(body);
+  console.log(string);
 
 
 
   let stringSearch = string.search('예약')
   console.log(stringSearch)
 
-  const filteringData = await axios.post("http://127.0.0.1:5001",{
+  const filteringData = await axios.post("http://127.0.0.1:5001/",{
     string : string,
     object : object
   }).then((result)=>{
 
-    terSfr = result.data.response.terSfr;
-    terSto = result.data.response.terSto;
-    date = result.data.response.date;
-    time = result.data.response.time;
-    arrTime = result.data.response.arrTime;
+    terSfr = result.data.terSfr;
+    terSto = result.data.terSto;
+    date = result.data.date;
+    time = result.data.time;
+    arrTime = result.data.arrTime;
 
   })
 
@@ -402,6 +405,7 @@ exports.autoReserveNoDepart = async function(req,res){
     LINE: dispatch.result.LINE[0]
   }
 
+  console.log(resultRow);
 
   return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow));
 
@@ -422,6 +426,8 @@ exports.autoReserveDepart = async function(req,res){
     date : date,
     arr_time : arrTime
   };
+
+  console.log(params);
 
   if(parseInt(moment().format("YYYYMMDD")) < date && !time && !arrTime){
     return res.send(response(baseResponse.SUCCESS("원하시는 시간이 있으신가요?"),params));
@@ -457,6 +463,8 @@ exports.autoReserveDepart = async function(req,res){
   }
 
   let arr = [];
+
+
   for(let i in routeList){
     arr[i] = routeList[i].arrival;
   }
@@ -466,31 +474,36 @@ exports.autoReserveDepart = async function(req,res){
 
   let dispatch = [];
   let resultRow = [];
-  for(let i in existRoute){
-    dispatch[i] = await busFunction.getRouteSchedule(date,time,existRoute[i].routeId);
-
-    if(arrTime !== ""){
-
-      const arrTimeDispatch = await busFunction.getArrTimeDispatch(arrTime,dispatch[i],i);
-
-      return res.send(arrTimeDispatch);
-
-    }
-
-    if(!dispatch[i].result.LINE[0]){
-      return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
-    }
 
 
-    resultRow[i] = {
-      departure: dispatch[i].result.departure,
-      arrival: dispatch[i].result.arrival,
-      LINE: dispatch[i].result.LINE[0]
-    }
+  dispatch[0] = await busFunction.getRouteSchedule(date,time,existRoute[0].routeId);
+
+  if(arrTime !== ""){
+
+    const arrTimeDispatch = await busFunction.getArrTimeDispatch(arrTime,dispatch[0],0);
+
+    return res.send(arrTimeDispatch);
+
   }
 
+  if(!dispatch[0].result.LINE){
+    return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+  }
+
+
+  resultRow[0] = {
+    routeId : existRoute[0].routeId,
+    date : date,
+    departure: dispatch[0].result.departure,
+    arrival: dispatch[0].result.arrival,
+    LINE: dispatch[0].result.LINE[0]
+  }
+
+
+  console.log(resultRow[0]);
+
   return res.send(response(
-      baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"+resultRow)));
+      baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow));
 
 
 }

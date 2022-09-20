@@ -1,5 +1,6 @@
 const { pool } = require("./database");
 const axios = require('axios');
+const secret = require("../config/secret")
 const moment = require('moment');
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
@@ -47,7 +48,7 @@ async function getRouteData (temp) {
         await axios({
             method : 'get',
             url: url[i],
-            headers: { "x-Gateway-APIKey": "0ed92177-200d-4143-9d14-acd661a85535" }
+            headers: { "x-Gateway-APIKey": secret.ROUTE_INFO_LIST }
         }).then((result)=>{
 
             let sql = `insert into route(departTerId, arrivalTerId, departTerName, arrivalTerName) values (?,?,?,?);`;
@@ -70,11 +71,13 @@ async function getRouteData (temp) {
 }
 
 async function getSchedule(){
-    let dateArray = [];
+    let dateArray = ["20220920"];
 
-    for(let i=0; i<31;i++){
+    /*for(let i=0; i<26;i++){
         dateArray[i] = moment().add(i,"days").format("YYYYMMDD");
-    }
+    }*/
+
+
 
     // console.log(dateArray);
     let promises = [];
@@ -116,7 +119,7 @@ let insertSchedule = async function (i, terminalId, dateArray, connection, sql) 
 
         // console.log(url);
 
-        let result = await axios.get(url,{headers:{"x-Gateway-APIKey": "42e5892b-0e48-4b0b-8cdc-6b9bc8699bc1"}})
+        let result = await axios.get(url,{headers:{"x-Gateway-APIKey": secret.DISPATCH_INFO_LIST}})
             .then((result)=>{
 
                 console.log(i +' 의 '+ j +" 번째");

@@ -157,9 +157,9 @@ async function getRouteData (temp) {
 }
 
 async function getSchedule(){
-    let dateArray = [];
+    let dateArray = ["20221017"];
 
-    dateArray[0] = moment().add(30,"days").format("YYYYMMDD");
+    // dateArray[0] = moment().add(30,"days").format("YYYYMMDD");
 
 
     // console.log(dateArray);
