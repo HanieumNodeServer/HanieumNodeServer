@@ -18,15 +18,17 @@ router.get("/terminal/list/nearest/two", bus.getNearestTerTwo);
 
 router.post("/bus/reservation/auto/ai", bus.autoReserveController);
 
-router.get("/bus/reservation/auto/ai/depart", bus.autoReserveDepart);
+// router.get("/bus/reservation/auto/ai/depart", bus.autoReserveDepart);
 
-router.get("/bus/reservation/auto/ai/no-depart", bus.autoReserveNoDepart);
+// router.get("/bus/reservation/auto/ai/no-depart", bus.autoReserveNoDepart);
 
 router.post("/bus/reservation/ticket",bus.reserveTicket);
 
 router.get("/bus/apiKey/test",bus.apiKeyTest);
 
 router.post("/bus/apiKey",bus.apiKey);
+
+router.delete("/bus/reservation/ticket",bus.reserveTicket);
 
 // router.post("/bus/chatting/ai/server",bus.sendAiServer);
 

@@ -19,6 +19,14 @@ dotenv.config({
   path : "APIKey.env"
 });
 
+let object = {
+  terSfr : "",
+  terSto : "",
+  date : "",
+  time : "",
+  arrTime : ""
+}
+
 
 
 
@@ -256,29 +264,15 @@ exports.autoReserveController = async function(req,res){
     longitude: req.query.longitude,
   };
 
-
-
   let terSfr, terSto, date, time, arrTime;
-
-  let object = {
-    "terSfr" : "",
-    "terSto" : "",
-    "date" : "",
-    "time" : "",
-    "arrTime" : ""
-  }
+  let list = [];
 
   const string = req.body.string;
   const body = req.body.body;
-  console.log(body);
-  console.log(string);
 
+  let now = moment();
 
-
-  let stringSearch = string.search('예약')
-  console.log(stringSearch)
-
-  const filteringData = await axios.post("http://127.0.0.1:5001/",{
+  const filteringData = await axios.post("http://43.200.99.243:5001/",{
     string : string,
     object : object
   }).then((result)=>{
@@ -289,11 +283,16 @@ exports.autoReserveController = async function(req,res){
     time = result.data.time;
     arrTime = result.data.arrTime;
 
+    console.log(result.data);
   })
 
 
+  // 이상한 말 했을 경우
+  if(!terSfr && !terSto && !date && !time && !arrTime){
+    return res.send(errResponse(baseResponse.EMPTY_USER_WORD))
+  }
 
-  if ((!terSfr || terSfr === "") && (terSto !== undefined || terSto !== "")) {
+  /*if ((!terSfr || terSfr === "") && (terSto !== undefined || terSto !== '')) {
     res.redirect(
         url.format({
           pathname: "/bus/reservation/auto/ai/no-depart",
@@ -321,9 +320,140 @@ exports.autoReserveController = async function(req,res){
         })
     );
   }
+*/
+
+
+  // 도착지를 말 안 한 경우
+  if(!terSto){
+    console.log("진짜 미안한데")
+    return res.send(errResponse(baseResponse.EMPTY_TERSTO));
+  }
+
+  // Date 가 미래인데, 시간을 말 안한 경우
+  if(parseInt(moment().format("YYYYMMDD")) < date && !time && !arrTime){
+    return res.send(response(baseResponse.SUCCESS("원하시는 시간이 있으신가요?")));
+  }
+
+  // 출발 시간 + 도착 시간 둘 다 있는 경우
+  if(time && arrTime)
+    return res.send(errResponse(baseResponse.WRONG_TIME_PARAMS));
+
+  // 날짜를 이야기 안 한 경우 - 오늘 날짜 = date
+  if(!date) {
+    date = now.format("YYYYMMDD");
+  } // 30일 이후의 날짜를 이야기 한 경우 ERROR
+  else if (parseInt(date) > parseInt(moment().add(30,"days").format("YYYYMMDD"))) {
+    return res.send(errResponse(baseResponse.OUT_RANGE_DATE));
+  }
+
+
+  // TODO: 해결 하자
+  if(!time && (parseInt(date) > parseInt(moment().format("YYYYMMDD"))) ) {
+    time = "0000";
+  }else if(!time && (parseInt(date) === parseInt(moment().format("YYYYMMDD"))) ) {
+    time = now.format("HH24MI");
+  }
+
+
+  // 출발지를 말 안한 경우 - 현재 위치 = 출발지
+  if(!terSfr) {
+    const temp = await busFunction.getDepartArrival('a',terSto,undefined,"departure");
+
+    for(let i in temp){
+      list[i] = temp[i].departure;
+    }
+
+    const array = await busFunction.checkExistRoute(list);
+
+    // 사용자 위치에서 가장 가까운 버스터미널을 출발 가능한 터미널 리스트에서 찾기
+    const routeRow = await busFunction.getNearestTerminal(array,user);
+
+    // 만약에 못찾으면 ERROR
+    if(!routeRow){
+      return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+    }
+
+    const dispatch = await busFunction.getRouteSchedule(date,time,routeRow[0].routeId);
+
+    if(arrTime){
+      const arrTimeDispatch = await busFunction.getArrTimeDispatch(arrTime,dispatch);
+      return res.send(arrTimeDispatch);
+    }
+
+    // 만약에 배차 라인이 없으면 ERROR
+    if(!dispatch.result.LINE[0]){
+      return res.send(errResponse(baseResponse.LINE_NOT_FOUND));
+    }
+
+    const resultRow = {
+      routeId : routeRow[0].routeId,
+      date : date,
+      departure: dispatch.result.departure,
+      arrival: dispatch.result.arrival,
+      LINE: dispatch.result.LINE[0]
+    }
+
+    // 확인용
+    console.log(resultRow);
+
+    return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow));
+  }
+
+  if(terSfr && terSto){
+
+    const allRouteList = await busFunction.getDepartListAI(terSfr,terSto);
+
+    let routeList = allRouteList.filter((element)=> element.arrival[0] !== undefined);
+
+    if(routeList[0] === undefined){
+      return res.send(errResponse(baseResponse.EMPTY_ROUTE_ID));
+    }
+
+    let arr = [];
+
+
+    for(let i in routeList){
+      arr[i] = routeList[i].arrival;
+    }
+
+    const existRoute = await busFunction.checkExistRoute(arr);
+
+    if(!existRoute[0]){
+      return res.send(errResponse(baseResponse.ROUTE_NOT_FOUND));
+    }
+
+    let dispatch = [];
+    let resultRow = [];
+
+    dispatch[0] = await busFunction.getRouteSchedule(date,time,existRoute[0].routeId);
+
+    if(arrTime !== ""){
+
+      const arrTimeDispatch = await busFunction.getArrTimeDispatch(arrTime,dispatch[0],0);
+
+      return res.send(arrTimeDispatch);
+
+    }
+
+    if(!dispatch[0].result.LINE[0]){
+      return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
+    }
+
+    resultRow[0] = {
+      routeId : existRoute[0].routeId,
+      date : date,
+      departure: dispatch[0].result.departure,
+      arrival: dispatch[0].result.arrival,
+      LINE: dispatch[0].result.LINE[0]
+    }
+
+    return res.send(response(
+        baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow[0]));
+  }
 
 }
 
+/*
 exports.autoReserveNoDepart = async function(req,res){
 
   let {arrivalKeyword, time, date, arrTime} = req.query;
@@ -345,8 +475,6 @@ exports.autoReserveNoDepart = async function(req,res){
 
   if(time !== "" && arrTime !== "")
     return res.send(errResponse(baseResponse.WRONG_TIME_PARAMS));
-
-
 
   const user = {
     latitude: Number(req.query.latitude),
@@ -397,6 +525,7 @@ exports.autoReserveNoDepart = async function(req,res){
 
 
 
+
   const resultRow = {
     routeId : routeRow[0].routeId,
     date : date,
@@ -405,7 +534,6 @@ exports.autoReserveNoDepart = async function(req,res){
     LINE: dispatch.result.LINE[0]
   }
 
-  console.log(resultRow);
 
   return res.send(response(baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),resultRow));
 
@@ -503,10 +631,11 @@ exports.autoReserveDepart = async function(req,res){
   console.log(resultRow[0]);
 
   return res.send(response(
-      baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow));
+      baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다. 원하시는 배차 정보를 선택해주세요"),resultRow[0]));
 
 
 }
+*/
 
 exports.reserveTicket = async function(req,res){
 
@@ -514,20 +643,27 @@ exports.reserveTicket = async function(req,res){
 
   const {routeId, date ,startTime, rotId, charge, seat, duration} = req.body;
 
+  if(!routeId || !date  ||!startTime || !rotId || !charge || !seat || !duration){
+    return res.send(errResponse(baseResponse.PARAM_EMPTY));
+  }
+
   const terminalId = await busFunction.getTerminalId(routeId);
 
   const corName = await busFunction.getCorName(routeId,date,startTime,rotId);
 
+  if(!corName[0]){
+    return res.send(errResponse(baseResponse.NOT_FOUND_CORNAME))
+  }
+
   const arrivalTime = await busFunction.calculateArrivalTime(startTime,duration);
+
+  if(!arrivalTime){
+    return res.send(errResponse(baseResponse.EMPTY_TIME_PARAMS));
+  }
 
   const startTimeDate = date.concat('',startTime)+"00";
 
   const arrivalTimeDate = date.concat('',arrivalTime)+"00";
-
-  const params = [userId, terminalId[0].departTerId ,
-    terminalId[0].arrivalTerId, startTimeDate,
-    arrivalTimeDate, corName[0].corName, charge, seat];
-
 
   if(!terminalId[0].departTerId  || !terminalId[0].arrivalTerId){
     return res.send(errResponse(baseResponse.EMPTY_TERMINAL_PARAMS))
@@ -542,19 +678,39 @@ exports.reserveTicket = async function(req,res){
 
   }
 
+  const params = [userId, terminalId[0].departTerId ,
+    terminalId[0].arrivalTerId, startTimeDate,
+    arrivalTimeDate, corName[0].corName, charge, seat];
+
+  console.log(params)
+
   const connection = await pool.getConnection((conn)=>conn);
 
   try{
 
     await connection.beginTransaction();
 
-    const resultRow = await busDao.insertTicketingInfo(connection,params);
 
-    await connection.commit();
+    if(req.method === 'DELETE'){
 
-    connection.release();
+      const resultRow = await busDao.deleteTicketInfo(connection,params);
 
-    return res.send(response(baseResponse.SUCCESS("예매에 성공했습니다.")));
+      await connection.commit();
+
+      connection.release();
+
+      return res.send(response(baseResponse.SUCCESS("성공적으로 예매를 취소했습니다.")));
+
+    } else{
+      const resultRow = await busDao.insertTicketingInfo(connection,params);
+
+      await connection.commit();
+
+      connection.release();
+
+      return res.send(response(baseResponse.SUCCESS("예매에 성공했습니다.")));
+    }
+
   }catch (err){
 
     await connection.rollback();
@@ -610,3 +766,60 @@ exports.apiKey = async function(req,res){
     return errResponse(baseResponse.FAIL);
   }
 }
+
+/*exports.deleteBusTicket = async function(req,res){
+
+  const userId = '1'; // 나중에 바꾸기
+
+  const {routeId, date ,startTime, rotId, charge, seat, duration} = req.body;
+
+  const terminalId = await busFunction.getTerminalId(routeId);
+
+  const corName = await busFunction.getCorName(routeId,date,startTime,rotId);
+
+  const arrivalTime = await busFunction.calculateArrivalTime(startTime,duration);
+
+  const startTimeDate = date.concat('',startTime)+"00";
+
+  const arrivalTimeDate = date.concat('',arrivalTime)+"00";
+
+  const params = [userId, terminalId[0].departTerId ,
+    terminalId[0].arrivalTerId, startTimeDate,
+    arrivalTimeDate, corName[0].corName, charge, seat];
+
+
+  if(!terminalId[0].departTerId  || !terminalId[0].arrivalTerId){
+    return res.send(errResponse(baseResponse.EMPTY_TERMINAL_PARAMS))
+  }
+  else if(!startTimeDate || !arrivalTimeDate){
+
+    return res.send(errResponse(baseResponse.EMPTY_TIME_PARAMS))
+
+  }else if(!corName || !charge || !seat){
+
+    return res.send(errResponse(baseResponse.EMPTY_BUSINFO_PARAMS))
+
+  }
+
+  const connection = await pool.getConnection((conn)=>conn);
+
+  try{
+
+    await connection.beginTransaction();
+
+    const resultRow = await busDao.insertTicketingInfo(connection,params);
+
+    await connection.commit();
+
+    connection.release();
+
+    return res.send(response(baseResponse.SUCCESS("예매에 성공했습니다.")));
+  }catch (err){
+
+    await connection.rollback();
+    logger.warn(err + "에러 발생");
+    connection.release();
+    return errResponse(baseResponse.FAIL);
+
+  }
+}*/

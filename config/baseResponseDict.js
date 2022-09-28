@@ -90,4 +90,22 @@ module.exports = {
   EMPTY_BUSINFO_PARAMS : {isSuccess : false,
     code : -1 ,
     message : "올바른 버스 정보를 입력해주세요"},
+
+  EMPTY_USER_WORD : {isSuccess: false,
+  code : -1,
+  message : "말씀해주신 내용에 해당하는 정보가 없습니다. 다시 말씀해주세요"},
+
+  NOT_FOUND_CORNAME : {isSuccess: false,
+    code : -1,
+    message : "회사 정보를 찾을 수 없습니다."},
+
+  EMPTY_TERSTO : {isSuccess: false,
+    code : -1,
+    message : "도착지를 포함해서 말씀해주세요."},
+
+  LINE_NOT_FOUND : {isSuccess: false,
+    code : -1,
+    message : "배차 시간표가 존재하지 않습니다."},
+
+
 };
