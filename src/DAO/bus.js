@@ -143,3 +143,39 @@ exports.getCorName = async function(connection,routeId,date,startTime,rotId){
 
     return resultRow;
 }
+
+exports.deleteTicketInfo = async function(connection,params){
+
+    // DB에서 아예 삭제하는 쿼리
+    /*const sql = `
+    delete from TICKETING
+    where
+        userId = ? and
+        departTerId = ? and
+        arrivalTerId = ? and
+        startTime = ? and
+        arrivalTime = ? and
+        corName = ? and
+        charge = ? and
+        seat = ?;
+    `;*/
+
+    const sql = `
+    UPDATE TICKETING
+        SET status = 'C'
+    WHERE
+        userId = ? and 
+        departTerId = ? and 
+        arrivalTerId = ? and 
+        startTime = ? and 
+        arrivalTime = ? and 
+        corName = ? and 
+        charge = ? and 
+        seat = ?;
+
+    `;
+    const [resultRow] = await connection.query(sql,params);
+
+    return resultRow;
+
+}

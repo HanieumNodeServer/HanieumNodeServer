@@ -206,7 +206,7 @@ exports.checkExistRoute = async function(list){
             (element) => temp.includes(element.routeId)
         )
 
-        connection.release;
+        connection.release();
 
         return data;
 
@@ -462,6 +462,8 @@ exports.calculateArrivalTime = async function(startTime,duration){
 
 
         let calculatedTime = calHour + calMin;
+
+        console.log(calculatedTime);
 
         return calculatedTime;
 

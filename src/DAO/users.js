@@ -11,7 +11,7 @@ exports.checkUserStatus = async function (connection, userId) {
 
 exports.getUserReservation = async function (connection, userId) {
   const sql = `
-select D.terminalName as DepartTerminal ,A.terminalName as ArrivalTerminal,charge, corName,concat(seat,'번') as seat,
+select userId,TICKETING.departTerId,TICKETING.arrivalTerId,routeId,D.terminalName as DepartTerminal ,A.terminalName as ArrivalTerminal,charge, corName,concat(seat,'번') as seat,
        startTime, arrivalTime,
 
        case
@@ -25,6 +25,7 @@ select D.terminalName as DepartTerminal ,A.terminalName as ArrivalTerminal,charg
 from TICKETING
 inner join TERMINAL A on TICKETING.arrivalTerId = A.tmoneyTerId
 inner join TERMINAL D on TICKETING.departTerId = D.tmoneyTerId
+inner join ROUTE R on TICKETING.departTerId = R.departTerId and TICKETING.arrivalTerId = R.arrivalTerId
 where userId = ?;
     `;
 
