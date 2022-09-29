@@ -7,7 +7,9 @@ const logger = require("loglevel");
 const jwt = require("jsonwebtoken");
 const jwtMiddleware = require("../../config/jwtMiddleware");
 const userDao = require("../DAO/users");
-// TODO : userDAO 추가
+const moment = require("moment");
+require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
 
 exports.signup = async function (req, res, next) {
   const { name, idNumber, year } = req.body;
@@ -88,6 +90,8 @@ exports.getReserveInfo = async function (req, res) {
     const userId = token.userId;*/
 
   const userId = req.query.userId;
+  const date = moment();
+
   const connection = await pool.getConnection((conn) => conn);
 
   try {
@@ -99,17 +103,41 @@ exports.getReserveInfo = async function (req, res) {
       return res.send(errResponse(baseResponse.USER_STATUS_FAIL));
     }
 
+    await userDao.updateReservationStatus(connection, userId);
     const temp = await userDao.getUserReservation(connection, userId);
 
     if (!temp) {
       return res.send(errResponse(baseResponse.USER_RESERVATION_EMPTY));
     }
 
+    // 현재 유저가 예약하고 있는 정보가 지금 시각과 맞는가
+
+    /*// 취소된 상태가 아니면 탑승 중으로 변경
+    if((moment().format("YYYYMMDDHHmmss")) > (moment(temp[0].startTime).format("YYYYMMDDHHmmss")) ){
+      console.log("지났는데요?");
+      const type = 'T'
+      const reservationUpdate = await userDao.updateReservationStatus(connection,userId,type);
+
+    }
+
+    // 탑승 중에서 도착 시간이 지나면 사용 완료로 변경
+    if((moment().format("YYYYMMDDHHmmss")) > (moment(temp[0].arrivalTime).format("YYYYMMDDHHmmss")) ){
+      console.log("지났는데요?");
+
+      const type = 'U'
+      const reservationUpdate = await userDao.updateReservationStatus(connection,userId,type);
+
+    }
+*/
+    console.log()
+
+
+    // 예약 정보가
     let info = temp.filter(
       (element) => element.status === "Reserving" || element.status === "Onboarding"
     );
 
-    if (!info[0]) {
+    if (info.length === 0) {
       return res.send(errResponse(baseResponse.USER_RESERVATION_EMPTY));
     }
 

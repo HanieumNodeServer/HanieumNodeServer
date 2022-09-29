@@ -28,7 +28,7 @@ router.get("/bus/apiKey/test",bus.apiKeyTest);
 
 router.post("/bus/apiKey",bus.apiKey);
 
-router.delete("/bus/reservation/ticket",bus.reserveTicket);
+router.delete("/bus/reservation/ticket",bus.deleteBusTicket);
 
 // router.post("/bus/chatting/ai/server",bus.sendAiServer);
 

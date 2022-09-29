@@ -14,6 +14,7 @@ moment.tz.setDefault("Asia/Seoul");
 const fs = require('fs')
 const dotenv = require('dotenv')
 const secretKey = require('../../config/secret');
+const userDao = require("../DAO/users");
 
 dotenv.config({
   path : "APIKey.env"
@@ -767,11 +768,20 @@ exports.apiKey = async function(req,res){
   }
 }
 
-/*exports.deleteBusTicket = async function(req,res){
+exports.deleteBusTicket = async function(req,res){
 
-  const userId = '1'; // 나중에 바꾸기
+  const userId = req.body.userId; // 나중에 바꾸기 req.token.userId
+  const connection = await pool.getConnection((conn)=>conn);
 
-  const {routeId, date ,startTime, rotId, charge, seat, duration} = req.body;
+
+  const isUser = await userDao.checkUserStatus(connection, userId);
+
+  if (isUser[0] === undefined || isUser[0].status !== "Y") {
+    return res.send(errResponse(baseResponse.USER_STATUS_FAIL));
+  }
+
+
+ /* const {routeId, date ,startTime, rotId, charge, seat, duration} = req.body;
 
   const terminalId = await busFunction.getTerminalId(routeId);
 
@@ -799,21 +809,26 @@ exports.apiKey = async function(req,res){
 
     return res.send(errResponse(baseResponse.EMPTY_BUSINFO_PARAMS))
 
-  }
+  }*/
 
-  const connection = await pool.getConnection((conn)=>conn);
 
   try{
 
     await connection.beginTransaction();
 
-    const resultRow = await busDao.insertTicketingInfo(connection,params);
+    // const resultRow = await busDao.insertTicketingInfo(connection,params);
+
+    const resultRow = await busDao.deleteTicketInfo(connection,userId);
+
+    if(resultRow.affectedRows === 0){
+      return res.send(errResponse(baseResponse.USER_RESERVATION_EMPTY))
+    }
 
     await connection.commit();
 
     connection.release();
 
-    return res.send(response(baseResponse.SUCCESS("예매에 성공했습니다.")));
+    return res.send(response(baseResponse.SUCCESS("성공적으로 예매를 취소했습니다.")));
   }catch (err){
 
     await connection.rollback();
@@ -822,4 +837,4 @@ exports.apiKey = async function(req,res){
     return errResponse(baseResponse.FAIL);
 
   }
-}*/
+}
