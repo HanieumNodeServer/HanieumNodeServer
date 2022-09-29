@@ -111,3 +111,24 @@ exports.getUserIdByRefreshToken = async function (connection, refreshToken) {
 
   return userId;
 };
+
+exports.updateReservationStatus = async function(connection,userId){
+
+  const sql = `
+    UPDATE TICKETING
+      SET status =
+        CASE
+           WHEN status = 'R' and now() > startTime THEN 'T'
+           WHEN status = 'T' and now() > arrivalTime THEN 'U'
+
+       ELSE status
+    END
+    where userId = ?;
+  `;
+
+  const resultRow = await connection.query(sql,userId);
+
+  return resultRow;
+
+}
+
