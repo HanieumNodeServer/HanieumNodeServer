@@ -299,7 +299,14 @@ exports.autoReserveController = async function (req, res) {
       time = result.data.time;
       arrTime = result.data.arrTime;
       console.log(result);
-      resultParams = result.data;
+
+      resultParams = {
+        terSfr,
+        terSto,
+        date,
+        time,
+        arrTime,
+      };
     });
 
   console.log(terSfr, terSto, date, time, arrTime);
@@ -357,8 +364,11 @@ exports.autoReserveController = async function (req, res) {
 
   // Date 가 미래인데, 시간을 말 안한 경우
   if (parseInt(moment().format("YYYYMMDD")) < date && !time && !arrTime) {
+    let params = {
+      params: resultParams,
+    };
     return res.send(
-      response(baseResponse.SUCCESS("원하시는 시간이 있으신가요?"))
+      response(baseResponse.SUCCESS("원하시는 시간이 있으신가요?"), params)
     );
   }
 
