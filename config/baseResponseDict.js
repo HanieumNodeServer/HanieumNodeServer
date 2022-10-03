@@ -107,6 +107,14 @@ module.exports = {
     code : -1,
     message : "배차 시간표가 존재하지 않습니다."},
 
+  HELLO : { isSuccess : false,
+    code : -1,
+    message : "안녕하세요 부릉이를 불러주셔서 감사합니다. 예약 내용을 이야기해주세요."
+  },
+
+  GET_OUT_WEIRD : {isSuccess: false,
+    code : -1,
+    message : "말씀하신 내용을 이해하지 못했습니다. 예약 내용을 이야기해주세요."},
 
 
 };

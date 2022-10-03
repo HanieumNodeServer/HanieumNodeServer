@@ -269,13 +269,13 @@ exports.autoReserveController = async function(req,res){
   let list = [];
 
   const string = req.body.string;
-  const body = req.body.body;
+  const body = req.body.object;
 
   let now = moment();
 
   const filteringData = await axios.post("http://43.200.99.243:5001/",{
     string : string,
-    object : object
+    object : body
   }).then((result)=>{
 
     terSfr = result.data.terSfr;
@@ -284,14 +284,17 @@ exports.autoReserveController = async function(req,res){
     time = result.data.time;
     arrTime = result.data.arrTime;
 
-    console.log(result.data);
   })
+
+  const hello = string.search(/안녕|안녕하세요|반가워/);
+  const weird = string.search(/미안|미안해|잘지냈어?|뭐해/);
 
 
   // 이상한 말 했을 경우
   if(!terSfr && !terSto && !date && !time && !arrTime){
     return res.send(errResponse(baseResponse.EMPTY_USER_WORD))
   }
+
 
   /*if ((!terSfr || terSfr === "") && (terSto !== undefined || terSto !== '')) {
     res.redirect(
@@ -322,6 +325,14 @@ exports.autoReserveController = async function(req,res){
     );
   }
 */
+
+  if(hello === 0){
+    return res.send(errResponse(baseResponse.HELLO));
+  }
+
+  if(weird === 0){
+    return res.send(errResponse(baseResponse.GET_OUT_WEIRD))
+  }
 
 
   // 도착지를 말 안 한 경우
@@ -829,6 +840,7 @@ exports.deleteBusTicket = async function(req,res){
     connection.release();
 
     return res.send(response(baseResponse.SUCCESS("성공적으로 예매를 취소했습니다.")));
+
   }catch (err){
 
     await connection.rollback();
