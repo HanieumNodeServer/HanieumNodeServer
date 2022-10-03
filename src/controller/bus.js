@@ -298,7 +298,7 @@ exports.autoReserveController = async function (req, res) {
       date = result.data.date;
       time = result.data.time;
       arrTime = result.data.arrTime;
-      // console.log(result);
+      console.log(result);
       resultParams = result.data;
     });
 
@@ -418,7 +418,8 @@ exports.autoReserveController = async function (req, res) {
     if (arrTime) {
       const arrTimeDispatch = await busFunction.getArrTimeDispatch(
         arrTime,
-        dispatch
+        dispatch,
+        resultParams
       );
       return res.send(arrTimeDispatch);
     }
@@ -434,6 +435,7 @@ exports.autoReserveController = async function (req, res) {
       departure: dispatch.result.departure,
       arrival: dispatch.result.arrival,
       LINE: dispatch.result.LINE[0],
+      params: resultParams,
     };
 
     // 확인용
