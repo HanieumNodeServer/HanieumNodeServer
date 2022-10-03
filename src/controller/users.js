@@ -103,7 +103,12 @@ exports.getReserveInfo = async function (req, res) {
       return res.send(errResponse(baseResponse.USER_STATUS_FAIL));
     }
 
+    await connection.beginTransaction();
+
     await userDao.updateReservationStatus(connection, userId);
+
+    await connection.commit();
+
     const temp = await userDao.getUserReservation(connection, userId);
 
     if (!temp) {
