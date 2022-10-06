@@ -259,7 +259,8 @@ exports.getArrTimeDispatch = async function (
   arrTime,
   dispatch,
   resultParams,
-  date
+  date,
+  routeId
 ) {
   let resultRow = [];
 
@@ -309,6 +310,7 @@ exports.getArrTimeDispatch = async function (
       console.log(recom);
 
       resultRow[0] = {
+        routeId,
         departure: dispatch.result.departure,
         arrival: dispatch.result.arrival,
         date: date, //?????

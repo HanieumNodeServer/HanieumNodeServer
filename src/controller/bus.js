@@ -430,7 +430,8 @@ exports.autoReserveController = async function (req, res) {
         arrTime,
         dispatch,
         resultParams,
-        date
+        date,
+        routeRow[0].routeId
       );
       return res.send(arrTimeDispatch);
     }
@@ -498,16 +499,6 @@ exports.autoReserveController = async function (req, res) {
       time,
       existRoute[0].routeId
     );
-
-    if (arrTime !== "") {
-      const arrTimeDispatch = await busFunction.getArrTimeDispatch(
-        arrTime,
-        dispatch[0],
-        0
-      );
-
-      return res.send(arrTimeDispatch);
-    }
 
     if (!dispatch[0].result.LINE[0]) {
       return res.send(errResponse(baseResponse.TERMINAL_NOT_FOUND));
