@@ -310,9 +310,11 @@ exports.getArrTimeDispatch = async function (arrTime, dispatch, resultParams) {
         params: {
           ...resultParams,
           terSfr: dispatch.result.departure,
-          time: dispatch.result.time,
+          time: recom.time,
         },
       };
+
+      console.log(resultRow[0]);
 
       return response(
         baseResponse.SUCCESS("말씀하신 요청사항에 따른 배차 정보입니다."),
