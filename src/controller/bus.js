@@ -377,7 +377,7 @@ exports.autoReserveController = async function (req, res) {
     return res.send(errResponse(baseResponse.WRONG_TIME_PARAMS));
 
   // 날짜를 이야기 안 한 경우 - 오늘 날짜 = date
-  if (!date) {
+  if (!date && parseInt(moment().format("HHH") < 2000)) {
     date = now.format("YYYYMMDD");
   } // 30일 이후의 날짜를 이야기 한 경우 ERROR
   else if (
