@@ -282,7 +282,7 @@ exports.autoReserveController = async function (req, res) {
 
   const string = req.body.string;
   const body = req.body.object;
-
+  console.log(body);
   let now = moment();
 
   let resultParams;
@@ -309,7 +309,7 @@ exports.autoReserveController = async function (req, res) {
       };
     });
 
-  console.log(terSfr, terSto, date, time, arrTime);
+  console.log(terSfr, terSto, date, time, arrTime, resultParams);
   const hello = string.search(/안녕|안녕하세요|반가워/);
   const weird = string.search(/미안|미안해|잘지냈어?|뭐해/);
 
