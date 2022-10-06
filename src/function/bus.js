@@ -300,11 +300,18 @@ exports.getArrTimeDispatch = async function (arrTime, dispatch, resultParams) {
 
       if (!recom) return errResponse(baseResponse.TERMINAL_NOT_FOUND);
 
+      console.log("dispatch");
+      console.log(recom);
+
       resultRow[0] = {
         departure: dispatch.result.departure,
         arrival: dispatch.result.arrival,
         LINE: recom,
-        params: resultParams,
+        params: {
+          ...resultParams,
+          terSfr: dispatch.result.departure,
+          time: dispatch.result.time,
+        },
       };
 
       return response(

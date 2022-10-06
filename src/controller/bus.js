@@ -445,8 +445,13 @@ exports.autoReserveController = async function (req, res) {
       departure: dispatch.result.departure,
       arrival: dispatch.result.arrival,
       LINE: dispatch.result.LINE[0],
-      params: resultParams,
+      params: {
+        ...resultParams,
+        terSfr: dispatch.result.departure,
+      },
     };
+
+    // terSfr = dispatch.result.departure;
 
     // 확인용
     console.log(resultRow);
