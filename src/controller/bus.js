@@ -429,7 +429,8 @@ exports.autoReserveController = async function (req, res) {
       const arrTimeDispatch = await busFunction.getArrTimeDispatch(
         arrTime,
         dispatch,
-        resultParams
+        resultParams,
+        date
       );
       return res.send(arrTimeDispatch);
     }
