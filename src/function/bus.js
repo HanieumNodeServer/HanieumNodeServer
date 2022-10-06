@@ -255,7 +255,12 @@ exports.getNearestTerminal = async function (temp, user) {
   }
 };
 
-exports.getArrTimeDispatch = async function (arrTime, dispatch, resultParams) {
+exports.getArrTimeDispatch = async function (
+  arrTime,
+  dispatch,
+  resultParams,
+  date
+) {
   let resultRow = [];
 
   try {
@@ -306,11 +311,12 @@ exports.getArrTimeDispatch = async function (arrTime, dispatch, resultParams) {
       resultRow[0] = {
         departure: dispatch.result.departure,
         arrival: dispatch.result.arrival,
+        date: date, //?????
         LINE: recom,
         params: {
           ...resultParams,
           terSfr: dispatch.result.departure,
-          time: recom.time,
+          time: "",
         },
       };
 
