@@ -11,7 +11,7 @@ router.get("/test/jk", index.test);
 
 router.get("/test/cd", index.test2);
 
-router.get("/test/test3", index.test2);
+router.get("/test/test4", index.test2);
 
 router.get("/", jwtMiddleware, (req, res) => {
   console.log("cookies", req.cookies);
